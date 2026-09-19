@@ -30,6 +30,23 @@ Come chat with the community in the dedicated Matrix [room](https://matrix.to/#/
 
 Please refer to the [setting up a development environment](CONTRIBUTING.md#setting-up-a-development-environment) section from the [contribution guide](CONTRIBUTING.md).
 
+### `dual1208` fork configuration
+
+The physical-device build is named **Element X tcno** and uses bundle identifier `com.dual1208.elementx`, app group `group.com.dual1208.elementx`, and Apple team `GQZ5664B67`. It defaults to `https://8.163.2.191`, whose Matrix Authentication Service issuer is `https://8.163.2.191/auth/`. MAS has a static public-client registration for client ID `01M2VM6HEE7G54S8RFEJEFK7DT` and redirect URI `com.dual1208.elementx:/oauth`, so sign-in does not depend on an Apple App Site Association file for the IP address.
+
+With Xcode 27 selected and the paired iPhone connected, export its identifier as `IOS_DEVICE_ID` and run `just deploy` to build, install, launch, verify the process, and capture a screenshot. For example:
+
+```shell
+export IOS_DEVICE_ID="<paired physical iPhone UDID>"
+just deploy
+```
+
+The identifier is intentionally kept out of the public fork. Each device operation requires it, enforces the local iOS 26.7 debug gate, checks that the gate's exact destination matches `IOS_DEVICE_ID`, and verifies that the connected target is physical hardware. Formatting and linting do not require a device identifier.
+
+The fork was validated on September 18, 2026 with Xcode 27.0 and iOS 26.7: the Debug app built successfully, signed as `GQZ5664B67.com.dual1208.elementx`, installed and launched on the gated physical iPhone, completed the static MAS custom-scheme authorization flow, and reached the signed-in Chats screen.
+
+This fork cannot read Element Classic's upstream app-group or keychain containers, so Classic account migration is unavailable. The paid development team is also not approved for Apple's Notification Filtering entitlement; the entitlement is omitted while the notification service extension remains enabled. Production push additionally requires independent APNs and Sygnal credentials for this bundle and topic. The fork cannot inherit Element's upstream push credentials. Universal-link behavior for the bare-IP associated domain depends on Apple accepting and fetching a matching AASA file; the configured custom-scheme redirect is the supported sign-in path for this deployment.
+
 ## Support
 
 When you are experiencing an issue on Element X iOS, please first search in [GitHub issues](https://github.com/element-hq/element-x-ios/issues)

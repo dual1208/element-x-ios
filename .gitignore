@@ -45,6 +45,7 @@ build
 
 ## Project specific
 test_output
+.codex-logs/
 
 # Only commit Pkl packages (there may be other caches in here).
 Components/Secrets/vendor/*
