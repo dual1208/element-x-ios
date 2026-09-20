@@ -25,3 +25,12 @@ strings:
         enumName: UntranslatedL10n
         lookupFunction: tr  # used for the loc to be computed variables
         publicAccess: false
+  - inputs: Resources/Localizations/en.lproj
+    filter: ManagedFamily*
+    outputs:
+      templatePath: Templates/Strings/structured-swift5-element.stencil
+      output: Strings+ManagedFamily.swift
+      params:
+        enumName: ManagedFamilyL10n
+        lookupFunction: tr  # used for the loc to be computed variables
+        publicAccess: false

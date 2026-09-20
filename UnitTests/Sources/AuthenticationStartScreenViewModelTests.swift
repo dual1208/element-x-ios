@@ -35,6 +35,10 @@ final class AuthenticationStartScreenViewModelTests {
         await setupViewModel()
         #expect(authenticationService.homeserver.value.loginMode == .unknown)
         #expect(client.urlForOauthOauthConfigurationPromptLoginHintDeviceIdAdditionalScopesCallsCount == 0)
+        #expect(!context.viewState.isManagedFamilyMode)
+        #expect(context.viewState.title == L10n.screenOnboardingWelcomeTitle)
+        #expect(context.viewState.message == L10n.screenOnboardingWelcomeMessage(InfoPlistReader.main.productionAppName))
+        #expect(context.viewState.loginButtonTitle == L10n.screenOnboardingSignInManually)
         
         // When tapping any of the buttons on the screen
         let actions: [(AuthenticationStartScreenViewAction, AuthenticationStartScreenViewModelAction)] = [
@@ -142,6 +146,10 @@ final class AuthenticationStartScreenViewModelTests {
         #expect(context.viewState.serverName == "company.com")
         #expect(!context.viewState.showCreateAccountButton)
         #expect(!context.viewState.showQRCodeLoginButton)
+        #expect(context.viewState.isManagedFamilyMode)
+        #expect(context.viewState.title == ManagedFamilyL10n.managedFamilyOnboardingTitle)
+        #expect(context.viewState.message == ManagedFamilyL10n.managedFamilyOnboardingMessage)
+        #expect(context.viewState.loginButtonTitle == ManagedFamilyL10n.managedFamilyOnboardingContinue)
         
         let failure = deferFailure(viewModel.actions, timeout: .seconds(1)) { action in
             action == .loginWithQR || action == .register

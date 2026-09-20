@@ -27,6 +27,7 @@ struct AuthenticationStartScreenViewState: BindableState {
     let serverName: String?
     let showCreateAccountButton: Bool
     let showQRCodeLoginButton: Bool
+    let isManagedFamilyMode: Bool
     
     enum ClassicAppMode { case welcomeBack(ClassicAppAccount), otherOptions(ClassicAppAccount) }
     var classicAppMode: ClassicAppMode?
@@ -35,8 +36,18 @@ struct AuthenticationStartScreenViewState: BindableState {
     
     var bindings = AuthenticationStartScreenViewStateBindings()
     
+    var title: String {
+        isManagedFamilyMode ? ManagedFamilyL10n.managedFamilyOnboardingTitle : L10n.screenOnboardingWelcomeTitle
+    }
+    
+    var message: String {
+        isManagedFamilyMode ? ManagedFamilyL10n.managedFamilyOnboardingMessage : L10n.screenOnboardingWelcomeMessage(InfoPlistReader.main.productionAppName)
+    }
+    
     var loginButtonTitle: String {
-        if let serverName {
+        if isManagedFamilyMode {
+            ManagedFamilyL10n.managedFamilyOnboardingContinue
+        } else if let serverName {
             L10n.screenOnboardingSignInTo(serverName)
         } else if showQRCodeLoginButton {
             L10n.screenOnboardingSignInManually

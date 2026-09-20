@@ -1,6 +1,4 @@
 "screen_home_tab_search" = "Search";
-"managed_family_setup_needs_help" = "Family setup needs help";
-"managed_family_setup_needs_help_message" = "Open Settings to repair account security or ask the family administrator to restore this room.";
 "screen_search_empty_state_message" = "Search for chats and messages";
 "screen_search_empty_state_title" = "Start searching...";
 "screen_search_no_results_message" = "There are no results for “%1$@.” Try a new search term.";

@@ -16,12 +16,12 @@ struct HomeScreenEmptyStateView: View {
     
     var body: some View {
         VStack(spacing: 6) {
-            Text(context.viewState.isManagedFamilyMode ? UntranslatedL10n.managedFamilySetupNeedsHelp : L10n.screenRoomlistEmptyTitle)
+            Text(context.viewState.isManagedFamilyMode ? ManagedFamilyL10n.managedFamilySetupNeedsHelp : L10n.screenRoomlistEmptyTitle)
                 .font(.compound.bodyLG)
                 .foregroundColor(.compound.textSecondary)
                 .multilineTextAlignment(.center)
             
-            Text(context.viewState.isManagedFamilyMode ? UntranslatedL10n.managedFamilySetupNeedsHelpMessage : L10n.screenRoomlistEmptyMessage)
+            Text(context.viewState.isManagedFamilyMode ? ManagedFamilyL10n.managedFamilySetupNeedsHelpMessage : L10n.screenRoomlistEmptyMessage)
                 .font(.compound.bodyLG)
                 .foregroundColor(.compound.textSecondary)
                 .multilineTextAlignment(.center)
@@ -30,6 +30,16 @@ struct HomeScreenEmptyStateView: View {
             if !context.viewState.isManagedFamilyMode {
                 Button { context.send(viewAction: .startChat) } label: {
                     Label(L10n.actionStartChat, icon: \.compose)
+                        .font(.compound.bodyLGSemibold)
+                        .foregroundColor(.compound.textOnSolidPrimary)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 22)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+            } else {
+                Button { context.send(viewAction: .showSettings) } label: {
+                    Label(L10n.actionOpenSettings, icon: \.settings)
                         .font(.compound.bodyLGSemibold)
                         .foregroundColor(.compound.textOnSolidPrimary)
                         .padding(.vertical, 6)

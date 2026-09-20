@@ -10,6 +10,7 @@
 import Foundation
 import Testing
 
+@Suite(.serialized)
 final class LocalizationTests {
     deinit {
         Bundle.overrideLocalizations = nil
@@ -80,5 +81,26 @@ final class LocalizationTests {
         #expect(UntranslatedL10n.untranslated == "Untranslated")
         #expect(UntranslatedL10n.untranslatedPlural(1) == "One untranslated item")
         #expect(UntranslatedL10n.untranslatedPlural(5) == "5 untranslated items")
+    }
+    
+    @Test
+    func managedFamily() {
+        Bundle.overrideLocalizations = ["en"]
+        #expect(ManagedFamilyL10n.managedFamilyOnboardingTitle == "Family chat")
+        #expect(ManagedFamilyL10n.managedFamilyOnboardingMessage == "Sign in with the account your family gave you. For first-time setup, ask the family member who installed the app to help.")
+        #expect(ManagedFamilyL10n.managedFamilyOnboardingContinue == "Continue")
+        #expect(ManagedFamilyL10n.managedFamilySetupNeedsHelp == "Family chat needs help")
+        #expect(ManagedFamilyL10n.managedFamilySetupNeedsHelpMessage == "Open Settings to finish account setup, or ask the family member who installed the app to help.")
+        
+        Bundle.overrideLocalizations = ["zh-Hans"]
+        #expect(ManagedFamilyL10n.managedFamilyOnboardingTitle == "家人聊天")
+        #expect(ManagedFamilyL10n.managedFamilyOnboardingMessage == "使用家人给你的账号登录。第一次使用时，请让帮你安装的家人陪你完成设置。")
+        #expect(ManagedFamilyL10n.managedFamilyOnboardingContinue == "继续")
+        #expect(ManagedFamilyL10n.managedFamilySetupNeedsHelp == "家人聊天需要帮助")
+        #expect(ManagedFamilyL10n.managedFamilySetupNeedsHelpMessage == "请打开“设置”完成账号设置，或请帮你安装这个应用的家人来处理。")
+        
+        Bundle.overrideLocalizations = ["xx"]
+        #expect(ManagedFamilyL10n.managedFamilyOnboardingTitle == "Family chat")
+        #expect(ManagedFamilyL10n.managedFamilyOnboardingContinue == "Continue")
     }
 }

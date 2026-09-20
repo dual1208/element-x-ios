@@ -398,6 +398,7 @@ final class HomeScreenViewModelTests {
         setupViewModel(appSettings: managedSettings)
         
         #expect(context.viewState.isManagedFamilyMode)
+        #expect(!context.viewState.isRoomListSearchEnabled)
         #expect(context.viewState.rooms.map(\.id) == ["1"])
         
         let failure = deferFailure(viewModel.actions, timeout: .seconds(1)) {
