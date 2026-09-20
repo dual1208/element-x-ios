@@ -91,6 +91,7 @@ enum HomeScreenSecurityBannerMode: Equatable {
 
 struct HomeScreenViewState: BindableState {
     var userProfile: UserProfile
+    var isManagedFamilyMode = false
     
     var securityBannerMode = HomeScreenSecurityBannerMode.none
     var shouldShowNewSoundBanner = false
@@ -144,7 +145,7 @@ struct HomeScreenViewState: BindableState {
     }
     
     var shouldShowFilters: Bool {
-        !bindings.isSearchFieldFocused && roomListMode == .rooms
+        !isManagedFamilyMode && !bindings.isSearchFieldFocused && roomListMode == .rooms
     }
     
     var shouldShowBanner: Bool {

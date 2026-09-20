@@ -393,6 +393,25 @@ final class HomeScreenViewModelTests {
     }
     
     @Test
+    func managedFamilyModeOnlyShowsConfiguredRoomAndGuardsCreation() async throws {
+        let managedSettings = AppSettings.volatile(managedFamilyConfiguration: .init(accountProvider: "example.com", roomID: "1"))
+        setupViewModel(appSettings: managedSettings)
+        
+        #expect(context.viewState.isManagedFamilyMode)
+        #expect(context.viewState.rooms.map(\.id) == ["1"])
+        
+        let failure = deferFailure(viewModel.actions, timeout: .seconds(1)) {
+            if case .presentStartChatScreen = $0 {
+                true
+            } else {
+                false
+            }
+        }
+        context.send(viewAction: .startChat)
+        try await failure.fulfill()
+    }
+    
+    @Test
     func roomListModeWaitsForTheRoomsToPublish() async throws {
         let (roomListSubject, stateSubject) = setupViewModelWithManualProvider()
         
@@ -437,7 +456,10 @@ final class HomeScreenViewModelTests {
         return (roomListSubject, stateSubject)
     }
     
-    private func setupViewModel(securityStatePublisher: CurrentValuePublisher<SessionSecurityState, Never>? = nil, invites: InviteType? = nil, roomSummaryProvider: RoomSummaryProviderMock? = nil) {
+    private func setupViewModel(securityStatePublisher: CurrentValuePublisher<SessionSecurityState, Never>? = nil,
+                                invites: InviteType? = nil,
+                                roomSummaryProvider: RoomSummaryProviderMock? = nil,
+                                appSettings: AppSettings? = nil) {
         cancellables.removeAll()
         
         var rooms: [RoomSummary] = .mockRooms
@@ -483,7 +505,7 @@ final class HomeScreenViewModelTests {
         
         viewModel = HomeScreenViewModel(userSession: userSession,
                                         selectedRoomPublisher: CurrentValueSubject<String?, Never>(nil).asCurrentValuePublisher(),
-                                        appSettings: appSettings,
+                                        appSettings: appSettings ?? self.appSettings,
                                         analyticsService: AnalyticsServiceMock(.init()),
                                         bugReportService: BugReportServiceMock(.init()),
                                         notificationManager: notificationManager,

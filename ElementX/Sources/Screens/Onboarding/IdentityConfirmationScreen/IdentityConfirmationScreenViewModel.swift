@@ -24,7 +24,10 @@ class IdentityConfirmationScreenViewModel: IdentityConfirmationScreenViewModelTy
         self.userSession = userSession
         self.userIndicatorController = userIndicatorController
         
-        super.init(initialViewState: IdentityConfirmationScreenViewState(learnMoreURL: appSettings.deviceVerificationURL))
+        let allowsRecoveryBypass = appSettings.managedFamilyConfiguration == nil
+        super.init(initialViewState: IdentityConfirmationScreenViewState(learnMoreURL: appSettings.deviceVerificationURL,
+                                                                         allowsIdentityReset: allowsRecoveryBypass,
+                                                                         allowsVerificationSkip: allowsRecoveryBypass))
         
         Task { [weak self] in
             for await state in userSession.sessionSecurityStatePublisher.values {
@@ -45,8 +48,10 @@ class IdentityConfirmationScreenViewModel: IdentityConfirmationScreenViewModelTy
         case .recoveryKey:
             actionsSubject.send(.recoveryKey)
         case .skip:
+            guard state.allowsVerificationSkip else { return }
             actionsSubject.send(.skip)
         case .reset:
+            guard state.allowsIdentityReset else { return }
             actionsSubject.send(.reset)
         case .logout:
             confirmLogout()

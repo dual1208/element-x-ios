@@ -16,6 +16,7 @@ class AuthenticationStartScreenViewModel: AuthenticationStartScreenViewModelType
     private let provisioningParameters: AccountProvisioningParameters?
     private let appMediator: AppMediatorProtocol
     private let userIndicatorController: UserIndicatorControllerProtocol
+    private let isManagedFamilyMode: Bool
     
     private let canReportProblem: Bool
     
@@ -37,9 +38,10 @@ class AuthenticationStartScreenViewModel: AuthenticationStartScreenViewModelType
         self.provisioningParameters = provisioningParameters
         self.appMediator = appMediator
         self.userIndicatorController = userIndicatorController
+        isManagedFamilyMode = appSettings.managedFamilyConfiguration != nil
         canReportProblem = isBugReportServiceEnabled
         
-        let isQRCodeScanningSupported = !ProcessInfo.processInfo.isiOSAppOnMac
+        let isQRCodeScanningSupported = !ProcessInfo.processInfo.isiOSAppOnMac && !isManagedFamilyMode
         let classicAppAccountProvider = authenticationService.classicAppAccount?.serverName
         let isClassicAppAccountAllowed = classicAppAccountProvider.map { appSettings.accountProviders.contains($0) } ?? false
         
@@ -89,10 +91,12 @@ class AuthenticationStartScreenViewModel: AuthenticationStartScreenViewModelType
             actionsSubject.send(.developerOptions)
             
         case .loginWithQR:
+            guard !isManagedFamilyMode else { return }
             actionsSubject.send(.loginWithQR)
         case .login:
             Task { await login() }
         case .register:
+            guard !isManagedFamilyMode else { return }
             actionsSubject.send(.register)
             
         case .continueWithClassic(let account):

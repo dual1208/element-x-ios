@@ -41,7 +41,9 @@ struct RoomDetailsScreen: View {
                 reportRoomSection
             }
             
-            leaveRoomSection
+            if context.viewState.canLeaveRoom {
+                leaveRoomSection
+            }
         }
         .compoundList()
         .alert(item: $context.alertInfo)

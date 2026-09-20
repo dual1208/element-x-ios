@@ -72,6 +72,18 @@ final class AnalyticsTests {
     }
     
     @Test
+    func managedFamilyModeDisablesDiagnosticsEvenWithPersistedConsent() {
+        let managedSettings = AppSettings.volatile(managedFamilyConfiguration: .init(accountProvider: "example.com", roomID: "!family"))
+        managedSettings.analyticsConsentState = .optedIn
+        let managedAnalytics = AnalyticsService(client: AnalyticsClientMock(), appSettings: managedSettings)
+        
+        #expect(managedSettings.analyticsConfiguration == nil)
+        #expect(managedSettings.bugReportSentryURL == nil)
+        #expect(!managedAnalytics.shouldShowAnalyticsPrompt)
+        #expect(!managedAnalytics.isEnabled)
+    }
+    
+    @Test
     func analyticsOptOut() {
         // Given a fresh install of the app (without PostHog analytics having been set).
         // When analytics is opt-out

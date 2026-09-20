@@ -49,6 +49,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         roomSummaryProvider = userSession.clientProxy.roomSummaryProvider
         
         super.init(initialViewState: .init(userProfile: userSession.clientProxy.userProfilePublisher.value,
+                                           isManagedFamilyMode: appSettings.managedFamilyConfiguration != nil,
                                            bindings: .init(filtersState: .init(appSettings: appSettings))),
                    mediaProvider: userSession.mediaProvider)
         
@@ -157,8 +158,10 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
-        Task {
-            state.reportRoomEnabled = await userSession.clientProxy.isReportRoomSupported
+        if appSettings.managedFamilyConfiguration == nil {
+            Task {
+                state.reportRoomEnabled = await userSession.clientProxy.isReportRoomSupported
+            }
         }
         
         let isSearchFieldFocused = context.$viewState.map(\.bindings.isSearchFieldFocused)
@@ -183,7 +186,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         
         if let roomSummaryProvider {
             updateRoomListMode(with: roomSummaryProvider.statePublisher.value,
-                               hasRooms: !roomSummaryProvider.roomListPublisher.value.isEmpty)
+                               hasRooms: roomSummaryProvider.roomListPublisher.value.contains { isAllowedManagedRoom($0.id) })
         }
     }
     
@@ -192,16 +195,22 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     override func process(viewAction: HomeScreenViewAction) {
         switch viewAction {
         case .selectRoom(let roomIdentifier):
+            guard isAllowedManagedRoom(roomIdentifier), isManagedFamilyCryptoReady else { return }
             actionsSubject.send(.presentRoom(roomIdentifier: roomIdentifier))
         case .detachRoom(let roomIdentifier):
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             actionsSubject.send(.detachRoom(roomIdentifier: roomIdentifier))
         case .showRoomDetails(let roomIdentifier):
+            guard isManagedFamilyCryptoReady else { return }
             actionsSubject.send(.presentRoomDetails(roomIdentifier: roomIdentifier))
         case .leaveRoom(let roomIdentifier):
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             startLeaveRoomProcess(roomID: roomIdentifier)
         case .confirmLeaveRoom(let roomIdentifier):
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             Task { await leaveRoom(roomID: roomIdentifier) }
         case .reportRoom(let roomIdentifier):
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             actionsSubject.send(.presentReportRoom(roomIdentifier: roomIdentifier))
         case .showSettings:
             actionsSubject.send(.presentSettingsScreen)
@@ -210,16 +219,20 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         case .confirmRecoveryKey:
             actionsSubject.send(.presentRecoveryKeyScreen)
         case .resetEncryption:
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             actionsSubject.send(.presentEncryptionResetScreen)
         case .skipRecoveryKeyConfirmation:
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             state.securityBannerMode = .dismissed
         case .dismissNewSoundBanner:
             appSettings.hasSeenNewSoundBanner = true
         case .updateVisibleItemRange(let range):
             roomSummaryProvider?.updateVisibleRange(range)
         case .startChat:
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             actionsSubject.send(.presentStartChatScreen)
         case .spaceFilters:
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             if spaceFilterSubject.value != nil {
                 spaceFilterSubject.send(nil)
             } else {
@@ -284,6 +297,12 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         }
     }
     
+    private var isManagedFamilyCryptoReady: Bool {
+        guard appSettings.managedFamilyConfiguration != nil else { return true }
+        let securityState = userSession.sessionSecurityStatePublisher.value
+        return securityState.verificationState == .verified && securityState.recoveryState == .enabled
+    }
+    
     // perphery: ignore - used in release mode
     func presentCrashedLastRunAlert() {
         // Delay setting the alert otherwise it automatically gets dismissed. Same as the force logout one.
@@ -332,7 +351,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 guard let self else { return }
                 
                 updateRooms()
-                updateRoomListMode(with: state, hasRooms: !rooms.isEmpty)
+                updateRoomListMode(with: state, hasRooms: rooms.contains { isAllowedManagedRoom($0.id) })
             }
             .store(in: &cancellables)
     }
@@ -340,6 +359,8 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private func updateRoomListMode(with roomSummaryProviderState: RoomSummaryProviderState, hasRooms: Bool) {
         let roomListMode: HomeScreenRoomListMode = if !roomSummaryProviderState.isLoaded {
             .skeletons // Still loading.
+        } else if appSettings.managedFamilyConfiguration != nil, !hasRooms {
+            .empty
         } else if roomSummaryProviderState.totalNumberOfRooms == 0 {
             .empty // Loaded, there are no rooms at all.
         } else if hasRooms {
@@ -378,7 +399,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         var rooms = [HomeScreenRoom]()
         let seenInvites = appSettings.seenInvites
         
-        for summary in roomSummaryProvider.roomListPublisher.value {
+        for summary in roomSummaryProvider.roomListPublisher.value where isAllowedManagedRoom(summary.id) {
             let room = HomeScreenRoom(summary: summary,
                                       roomListActivityVisibility: appSettings.roomListActivityVisibility,
                                       seenInvites: seenInvites)
@@ -386,6 +407,11 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         }
         
         state.rooms = rooms
+    }
+    
+    private func isAllowedManagedRoom(_ roomID: String) -> Bool {
+        guard let configuration = appSettings.managedFamilyConfiguration else { return true }
+        return roomID == configuration.roomID
     }
     
     private func markRoomAsFavourite(_ roomID: String, isFavourite: Bool) async {

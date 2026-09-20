@@ -45,6 +45,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private let searchTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails?
     
     private var settingsFlowCoordinator: SettingsFlowCoordinator?
+    private var isRoutingManagedFamilySession = false
+    private var isOnboardingPresented = false
+    private var managedFamilyRouteRetryTask: Task<Void, Never>?
     
     enum State: StateType {
         /// The state machine hasn't started.
@@ -86,7 +89,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         navigationTabCoordinator = NavigationTabCoordinator()
         navigationRootCoordinator.setRootCoordinator(navigationTabCoordinator)
         
-        let chatsSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
+        let chatsSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome),
+                                                               prefersDetailOnly: flowParameters.appSettings.managedFamilyConfiguration != nil)
         chatsTabFlowCoordinator = ChatsTabFlowCoordinator(navigationSplitCoordinator: chatsSplitCoordinator,
                                                           flowParameters: flowParameters)
         chatsTabDetails = .init(tag: HomeTab.chats, title: L10n.screenHomeTabChats, icon: \.chat, selectedIcon: \.chatSolid)
@@ -98,7 +102,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         spacesTabDetails = .init(tag: HomeTab.spaces, title: L10n.screenHomeTabSpaces, icon: \.space, selectedIcon: \.spaceSolid)
         spacesTabDetails.navigationSplitCoordinator = spacesSplitCoordinator
         
-        if flowParameters.appSettings.globalSearchEnabled, #available(iOS 26.0, *) {
+        if flowParameters.appSettings.managedFamilyConfiguration == nil,
+           flowParameters.appSettings.globalSearchEnabled,
+           #available(iOS 26.0, *) {
             let searchCoordinator = SearchScreenCoordinator(parameters: .init(roomSummaryProvider: flowParameters.userSession.clientProxy.alternateRoomSummaryProvider,
                                                                               clientProxy: flowParameters.userSession.clientProxy,
                                                                               mediaProvider: flowParameters.userSession.mediaProvider,
@@ -122,9 +128,11 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                                                               flowParameters: flowParameters)
         
         var tabs: [NavigationTabCoordinator<HomeTab>.Tab] = [
-            .init(coordinator: chatsSplitCoordinator, details: chatsTabDetails),
-            .init(coordinator: spacesSplitCoordinator, details: spacesTabDetails)
+            .init(coordinator: chatsSplitCoordinator, details: chatsTabDetails)
         ]
+        if flowParameters.appSettings.managedFamilyConfiguration == nil {
+            tabs.append(.init(coordinator: spacesSplitCoordinator, details: spacesTabDetails))
+        }
         if let searchTabNavigationStackCoordinator, let searchTabDetails {
             tabs.append(.init(coordinator: searchTabNavigationStackCoordinator, details: searchTabDetails))
         }
@@ -146,6 +154,23 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     
     func handleAppRoute(_ appRoute: AppRoute, animated: Bool) {
         MXLog.info("Handling app route: \(appRoute)")
+        
+        if let configuration = flowParameters.appSettings.managedFamilyConfiguration {
+            guard isAllowedManagedRoute(appRoute, roomID: configuration.roomID) else {
+                MXLog.warning("Ignoring a route outside of the managed Family room.")
+                return
+            }
+            
+            guard !isManagedFamilyContentRoute(appRoute) || isManagedFamilyCryptoReady else {
+                presentManagedFamilyCryptoRepairIfNeeded()
+                return
+            }
+            
+            if case .roomList = appRoute {
+                handleAppRoute(.room(roomID: configuration.roomID, via: []), animated: animated)
+                return
+            }
+        }
         
         switch appRoute {
         case .accountProvisioningLink, .oAuthCallback:
@@ -210,8 +235,11 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             guard let self else { return }
             
             chatsTabFlowCoordinator.start()
-            spacesTabFlowCoordinator.start()
+            if flowParameters.appSettings.managedFamilyConfiguration == nil {
+                spacesTabFlowCoordinator.start()
+            }
             attemptStartingOnboarding()
+            routeManagedFamilySessionIfReady()
         }
         
         stateMachine.addRoutes(event: .showSettingsScreen, transitions: [.tabBar => .settingsScreen]) { [weak self] _ in
@@ -219,6 +247,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         }
         stateMachine.addRoutes(event: .dismissedSettingsScreen, transitions: [.settingsScreen => .tabBar]) { [weak self] _ in
             self?.settingsFlowCoordinator = nil
+            self?.routeManagedFamilySessionIfReady()
         }
         
         stateMachine.addErrorHandler { context in
@@ -241,6 +270,10 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 case .sessionVerification(let flow):
                     presentSessionVerificationScreen(flow: flow)
                 case .showCallScreen(let roomProxy, let isVoiceCall):
+                    guard flowParameters.appSettings.managedFamilyConfiguration == nil || isManagedFamilyCryptoReady else {
+                        presentManagedFamilyCryptoRepairIfNeeded()
+                        return
+                    }
                     presentCallScreen(roomProxy: roomProxy, voiceOnly: isVoiceCall)
                 case .hideCallScreenOverlay:
                     hideCallScreenOverlay()
@@ -273,6 +306,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 
                 attemptStartingOnboarding()
                 setupSessionVerificationRequestsObserver()
+                routeManagedFamilySessionIfReady()
             }
             .store(in: &cancellables)
         
@@ -296,7 +330,15 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 // Don't alarm the user while we've intentionally suspended the client.
                 case (.reachable, .reachable), (.reachable, .suspended):
                     flowParameters.userIndicatorController.retractIndicatorWithId(reachabilityNotificationID)
+                    routeManagedFamilySessionIfReady()
                 }
+            }
+            .store(in: &cancellables)
+        
+        userSession.clientProxy.staticRoomSummaryProvider.roomListPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.routeManagedFamilySessionIfReady()
             }
             .store(in: &cancellables)
         
@@ -306,9 +348,12 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 
                 switch action {
                 case .requestPresentation(let animated):
+                    isOnboardingPresented = true
                     navigationTabCoordinator.setFullScreenCoverCoordinator(onboardingStackCoordinator, animated: animated)
                 case .dismiss:
+                    isOnboardingPresented = false
                     navigationTabCoordinator.setFullScreenCoverCoordinator(nil)
+                    routeManagedFamilySessionIfReady()
                 case .logoutConfirmed:
                     actionsSubject.send(.logout)
                 }
@@ -347,8 +392,117 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     
     // MARK: - Onboarding
     
+    private func isAllowedManagedRoute(_ route: AppRoute, roomID: String) -> Bool {
+        switch route {
+        case .roomList, .settings, .chatBackupSettings, .roomMemberDetails:
+            true
+        case .room(let routeRoomID, _), .roomDetails(let routeRoomID), .call(let routeRoomID, _),
+             .event(_, let routeRoomID, _), .childEvent(_, let routeRoomID, _),
+             .transferOwnership(let routeRoomID), .thread(let routeRoomID, _, _):
+            routeRoomID == roomID
+        case .share(let payload):
+            payload.roomID == nil || payload.roomID == roomID
+        case .accountProvisioningLink, .oAuthCallback, .roomAlias, .childRoom, .childRoomAlias,
+             .eventOnRoomAlias, .childEventOnRoomAlias, .userProfile, .search:
+            false
+        }
+    }
+    
+    private func isManagedFamilyContentRoute(_ route: AppRoute) -> Bool {
+        switch route {
+        case .settings, .chatBackupSettings, .accountProvisioningLink, .oAuthCallback:
+            false
+        default:
+            true
+        }
+    }
+    
+    private var isManagedFamilyCryptoReady: Bool {
+        let state = userSession.sessionSecurityStatePublisher.value
+        return state.verificationState == .verified && state.recoveryState == .enabled
+    }
+    
+    private func presentManagedFamilyCryptoRepairIfNeeded() {
+        let state = userSession.sessionSecurityStatePublisher.value
+        guard state.verificationState == .verified,
+              state.recoveryState == .disabled || state.recoveryState == .incomplete,
+              stateMachine.state == .tabBar else { return }
+        handleAppRoute(.chatBackupSettings, animated: true)
+    }
+    
+    /// Continue through the SDK's real verification and recovery state before opening the Family room.
+    /// Existing sessions for another homeserver remain untouched and fall back to the repair/settings UI.
+    private func routeManagedFamilySessionIfReady() {
+        guard let configuration = flowParameters.appSettings.managedFamilyConfiguration,
+              !onboardingFlowCoordinator.shouldStart,
+              !isOnboardingPresented,
+              !isRoutingManagedFamilySession else { return }
+        
+        guard isManagedFamilySessionCompatible(with: configuration) else {
+            MXLog.error("The restored session does not belong to the managed account provider.")
+            return
+        }
+        
+        let securityState = userSession.sessionSecurityStatePublisher.value
+        guard securityState.verificationState == .verified else { return }
+        
+        switch securityState.recoveryState {
+        case .disabled, .incomplete:
+            guard stateMachine.state == .tabBar else { return }
+            handleAppRoute(.chatBackupSettings, animated: true)
+        case .enabled:
+            guard !isDisplayingRoomScreen(withRoomID: configuration.roomID) else { return }
+            managedFamilyRouteRetryTask?.cancel()
+            managedFamilyRouteRetryTask = nil
+            isRoutingManagedFamilySession = true
+            Task { [weak self] in
+                guard let self else { return }
+                defer { isRoutingManagedFamilySession = false }
+                
+                switch await userSession.clientProxy.roomForIdentifier(configuration.roomID) {
+                case .joined:
+                    handleAppRoute(.room(roomID: configuration.roomID, via: []), animated: true)
+                case .invited:
+                    guard case .success = await userSession.clientProxy.joinRoom(configuration.roomID, via: []) else {
+                        MXLog.error("Failed to accept the managed Family room invitation.")
+                        scheduleManagedFamilyRouteRetry()
+                        return
+                    }
+                    handleAppRoute(.room(roomID: configuration.roomID, via: []), animated: true)
+                case nil:
+                    MXLog.info("The managed Family room is not in the initial room list yet; retrying.")
+                    scheduleManagedFamilyRouteRetry()
+                case .knocked, .banned, .left:
+                    MXLog.error("The managed Family room is unavailable; administrator repair is required.")
+                }
+            }
+        case .settingUp, .unknown:
+            break
+        }
+    }
+    
+    private func scheduleManagedFamilyRouteRetry() {
+        guard managedFamilyRouteRetryTask == nil else { return }
+        managedFamilyRouteRetryTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            self?.managedFamilyRouteRetryTask = nil
+            self?.routeManagedFamilySessionIfReady()
+        }
+    }
+    
+    private func isManagedFamilySessionCompatible(with configuration: ManagedFamilyConfiguration) -> Bool {
+        let homeserver = userSession.clientProxy.homeserver
+        return homeserver == configuration.accountProvider || URL(string: homeserver)?.host == configuration.accountProvider
+    }
+    
     private func attemptStartingOnboarding() {
         MXLog.info("Attempting to start onboarding")
+        
+        if let configuration = flowParameters.appSettings.managedFamilyConfiguration,
+           !isManagedFamilySessionCompatible(with: configuration) {
+            return
+        }
         
         if onboardingFlowCoordinator.shouldStart {
             clearRoute(animated: false)

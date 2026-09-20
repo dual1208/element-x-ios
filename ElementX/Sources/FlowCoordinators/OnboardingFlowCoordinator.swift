@@ -261,9 +261,11 @@ class OnboardingFlowCoordinator: FlowCoordinatorProtocol {
             case .recoveryKey:
                 presentRecoveryKeyScreen()
             case .skip:
+                guard appSettings.managedFamilyConfiguration == nil else { return }
                 appSettings.hasRunIdentityConfirmationOnboarding = true
                 stateMachine.tryEvent(.nextSkippingIdentityConfirmed)
             case .reset:
+                guard appSettings.managedFamilyConfiguration == nil else { return }
                 startEncryptionResetFlow()
             case .logoutConfirmed:
                 actionsSubject.send(.logoutConfirmed)

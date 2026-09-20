@@ -69,6 +69,7 @@ class RoomScreenViewModel: RoomScreenViewModelType, RoomScreenViewModelProtocol 
         
         let viewState = RoomScreenViewState(roomTitle: roomProxy.infoPublisher.value.displayName ?? roomProxy.id,
                                             roomAvatar: roomProxy.infoPublisher.value.avatar,
+                                            showsAppSettingsButton: appSettings.managedFamilyConfiguration != nil,
                                             hasOngoingCall: roomProxy.infoPublisher.value.hasRoomCall,
                                             isDM: roomProxy.infoPublisher.value.isDM,
                                             hasSuccessor: roomProxy.infoPublisher.value.successor != nil,
@@ -86,6 +87,8 @@ class RoomScreenViewModel: RoomScreenViewModelType, RoomScreenViewModelProtocol 
     
     override func process(viewAction: RoomScreenViewAction) {
         switch viewAction {
+        case .displayAppSettings:
+            actionsSubject.send(.displayAppSettings)
         case .tappedPinnedEventsBanner:
             handleTappedPinnedEventsBanner()
         case .viewAllPins:

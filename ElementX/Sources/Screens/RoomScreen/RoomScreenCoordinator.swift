@@ -33,6 +33,7 @@ struct RoomScreenCoordinatorParameters {
 }
 
 enum RoomScreenCoordinatorAction {
+    case presentAppSettings
     case presentReportContent(itemID: TimelineItemIdentifier, senderID: String)
     case presentMediaUploadPicker(mode: MediaPickerScreenMode, caption: NSAttributedString)
     case presentMediaUploadPreviewScreen(mediaURLs: [URL], caption: NSAttributedString)
@@ -186,6 +187,8 @@ final class RoomScreenCoordinator: CoordinatorProtocol {
                 guard let self else { return }
                 
                 switch action {
+                case .displayAppSettings:
+                    actionsSubject.send(.presentAppSettings)
                 case .focusEvent(eventID: let eventID):
                     focusOnEvent(FocusEvent(eventID: eventID, shouldSetPin: false))
                 case .displayPinnedEventsTimeline:

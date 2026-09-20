@@ -78,10 +78,12 @@ struct IdentityConfirmationScreen: View {
                     .buttonStyle(.compound(.primary))
                 }
                 
-                Button(L10n.screenIdentityConfirmationCannotConfirm) {
-                    context.send(viewAction: .reset)
+                if context.viewState.allowsIdentityReset {
+                    Button(L10n.screenIdentityConfirmationCannotConfirm) {
+                        context.send(viewAction: .reset)
+                    }
+                    .buttonStyle(.compound(.secondary))
                 }
-                .buttonStyle(.compound(.secondary))
             } else {
                 Button { /* Placeholder button, there is no action */ } label: {
                     Label {
@@ -95,7 +97,7 @@ struct IdentityConfirmationScreen: View {
                 .disabled(true)
             }
             
-            if shouldShowSkipButton {
+            if shouldShowSkipButton, context.viewState.allowsVerificationSkip {
                 Button("\(L10n.actionSkip) 🙉") {
                     context.send(viewAction: .skip)
                 }

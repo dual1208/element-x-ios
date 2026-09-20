@@ -304,6 +304,17 @@ struct RoomScreen: View {
     
     @ToolbarContentBuilder
     private var roomToolbar: some ToolbarContent {
+        if context.viewState.showsAppSettingsButton {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    context.send(viewAction: .displayAppSettings)
+                } label: {
+                    CompoundIcon(\.settings)
+                }
+                .accessibilityLabel(L10n.commonSettings)
+            }
+        }
+        
         // .principal + .primaryAction works better than .navigation leading + trailing
         // as the latter disables interaction in the action button for rooms with long names
         ToolbarItem(placement: .principal) {

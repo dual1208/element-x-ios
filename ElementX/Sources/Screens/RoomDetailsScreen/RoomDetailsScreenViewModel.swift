@@ -49,7 +49,8 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
          analyticsService: AnalyticsServiceProtocol,
          userIndicatorController: UserIndicatorControllerProtocol,
          notificationSettingsProxy: NotificationSettingsProxyProtocol,
-         attributedStringBuilder: AttributedStringBuilderProtocol) {
+         attributedStringBuilder: AttributedStringBuilderProtocol,
+         appSettings: AppSettings = .volatile()) {
         self.roomProxy = roomProxy
         self.userSession = userSession
         self.analyticsService = analyticsService
@@ -66,12 +67,15 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
                                                    topicSummary: topic?.unattributedStringByReplacingNewlinesWithSpaces(),
                                                    joinedMembersCount: roomProxy.infoPublisher.value.joinedMembersCount,
                                                    notificationSettingsState: .loading,
+                                                   canLeaveRoom: appSettings.managedFamilyConfiguration == nil,
                                                    bindings: .init())
         super.init(initialViewState: appHooks.roomDetailsScreenHook.update(viewState),
                    mediaProvider: userSession.mediaProvider)
         
-        Task {
-            state.reportRoomEnabled = await userSession.clientProxy.isReportRoomSupported
+        if appSettings.managedFamilyConfiguration == nil {
+            Task {
+                state.reportRoomEnabled = await userSession.clientProxy.isReportRoomSupported
+            }
         }
         
         userSession.clientProxy.homeserverReachabilityPublisher
@@ -115,8 +119,10 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
                 actionsSubject.send(.requestInvitePeoplePresentation)
             }
         case .processTapLeave:
+            guard state.canLeaveRoom else { return }
             processTapToLeave()
         case .confirmLeave:
+            guard state.canLeaveRoom else { return }
             Task { await leaveRoom() }
         case .processTapIgnore:
             state.bindings.ignoreUserRoomAlertItem = .init(action: .ignore)

@@ -134,6 +134,23 @@ final class AuthenticationStartScreenViewModelTests {
         #expect(authenticationService.homeserver.value.loginMode == .password)
     }
     
+    @Test
+    func managedFamilyModeUsesOnlyConfiguredProvider() async throws {
+        appSettings = .volatile(managedFamilyConfiguration: .init(accountProvider: "company.com", roomID: "!family"))
+        await setupViewModel()
+        
+        #expect(context.viewState.serverName == "company.com")
+        #expect(!context.viewState.showCreateAccountButton)
+        #expect(!context.viewState.showQRCodeLoginButton)
+        
+        let failure = deferFailure(viewModel.actions, timeout: .seconds(1)) { action in
+            action == .loginWithQR || action == .register
+        }
+        context.send(viewAction: .loginWithQR)
+        context.send(viewAction: .register)
+        try await failure.fulfill()
+    }
+    
     // MARK: - Classic App Account
     
     @Test

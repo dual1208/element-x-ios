@@ -12,7 +12,8 @@ import MatrixRustSDKMocks
 import Testing
 import UserNotifications
 
-nonisolated struct NotificationContentBuilderTests {
+@MainActor
+struct NotificationContentBuilderTests {
     var notificationContentBuilder: NotificationContentBuilder
     var mediaProvider: MediaProviderMock
     var notificationContent: UNMutableNotificationContent

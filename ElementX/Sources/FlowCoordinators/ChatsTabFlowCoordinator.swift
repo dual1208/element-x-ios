@@ -92,6 +92,12 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     // MARK: - Private
     
     func asyncHandleAppRoute(_ appRoute: AppRoute, animated: Bool) async {
+        if let configuration = flowParameters.appSettings.managedFamilyConfiguration,
+           !isAllowedManagedRoute(appRoute, roomID: configuration.roomID) {
+            MXLog.warning("Ignoring a Chats route outside of the managed Family room.")
+            return
+        }
+        
         showLoadingIndicator(delay: .seconds(0.5))
         defer { hideLoadingIndicator() }
         
@@ -124,7 +130,11 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                 stateMachine.processEvent(.selectRoom(roomID: roomID, via: [], entryPoint: .roomDetails), userInfo: .init(animated: animated))
             }
         case .roomList:
-            roomFlowCoordinator?.clearRoute(animated: animated)
+            if let roomID = flowParameters.appSettings.managedFamilyConfiguration?.roomID {
+                stateMachine.processEvent(.selectRoom(roomID: roomID, via: [], entryPoint: .room), userInfo: .init(animated: animated))
+            } else {
+                roomFlowCoordinator?.clearRoute(animated: animated)
+            }
         case .roomMemberDetails:
             roomFlowCoordinator?.handleAppRoute(appRoute, animated: animated)
         case .thread(let roomID, let threadRootEventID, let focusEventID):
@@ -152,7 +162,7 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
         case .userProfile(let userID):
             stateMachine.processEvent(.showUserProfileScreen(userID: userID), userInfo: .init(animated: animated))
         case .share(let payload):
-            if let roomID = payload.roomID {
+            if let roomID = payload.roomID ?? flowParameters.appSettings.managedFamilyConfiguration?.roomID {
                 stateMachine.processEvent(.selectRoom(roomID: roomID,
                                                       via: [],
                                                       entryPoint: .share(payload)),
@@ -170,6 +180,22 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
             actionsSubject.send(.showChatBackupSettings)
         case .accountProvisioningLink, .oAuthCallback, .settings, .call, .search:
             break // These routes cannot be handled.
+        }
+    }
+    
+    private func isAllowedManagedRoute(_ route: AppRoute, roomID: String) -> Bool {
+        switch route {
+        case .roomList, .chatBackupSettings, .roomMemberDetails:
+            true
+        case .room(let routeRoomID, _), .roomDetails(let routeRoomID), .event(_, let routeRoomID, _),
+             .childEvent(_, let routeRoomID, _), .transferOwnership(let routeRoomID),
+             .thread(let routeRoomID, _, _):
+            routeRoomID == roomID
+        case .share(let payload):
+            payload.roomID == nil || payload.roomID == roomID
+        case .accountProvisioningLink, .oAuthCallback, .roomAlias, .childRoom, .childRoomAlias,
+             .eventOnRoomAlias, .childEventOnRoomAlias, .userProfile, .call, .settings, .search:
+            false
         }
     }
     
@@ -419,6 +445,7 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                 case .presentEncryptionResetScreen:
                     stateMachine.processEvent(.startEncryptionResetFlow)
                 case .presentStartChatScreen:
+                    guard flowParameters.appSettings.managedFamilyConfiguration == nil else { return }
                     stateMachine.processEvent(.startStartChatFlow)
                 case .logout:
                     actionsSubject.send(.logout)
@@ -531,6 +558,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
             guard let self else { return }
             
             switch action {
+            case .showSettings:
+                actionsSubject.send(.showSettings)
             case .presentCallScreen(let roomProxy, let isVoiceCall):
                 actionsSubject.send(.showCallScreen(roomProxy: roomProxy, isVoiceCall: isVoiceCall))
             case .verifyUser(let userID):

@@ -28,7 +28,7 @@ class AnalyticsService: AnalyticsServiceProtocol {
     }
     
     var isEnabled: Bool {
-        appSettings.analyticsConsentState == .optedIn
+        appSettings.analyticsConsentState == .optedIn && appSettings.analyticsConfiguration != nil
     }
     
     func optIn() {

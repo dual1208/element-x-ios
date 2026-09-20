@@ -14,6 +14,7 @@ import SwiftUI
 /// into a single navigation stack on compact layouts
 @Observable class NavigationSplitCoordinator: CoordinatorProtocol, CustomStringConvertible {
     fileprivate let placeholderModule: NavigationModule
+    private let prefersDetailOnly: Bool
     
     fileprivate var sidebarModule: NavigationModule? {
         didSet {
@@ -44,6 +45,10 @@ import SwiftUI
             if let detailModule {
                 logPresentationChange("Set detail", detailModule)
                 detailModule.coordinator?.start()
+            }
+            
+            if prefersDetailOnly {
+                columnVisibility = detailModule == nil ? .all : .detailOnly
             }
         }
     }
@@ -92,6 +97,14 @@ import SwiftUI
     }
     
     fileprivate var compactLayoutRootModule: NavigationModule? {
+        if prefersDetailOnly, let detailModule {
+            if let detailNavigationStackCoordinator = detailModule.coordinator as? NavigationStackCoordinator,
+               let detailRootModule = detailNavigationStackCoordinator.rootModule {
+                return detailRootModule
+            }
+            return detailModule
+        }
+        
         if let sidebarNavigationStackCoordinator = sidebarModule?.coordinator as? NavigationStackCoordinator {
             if let sidebarRootModule = sidebarNavigationStackCoordinator.rootModule {
                 return sidebarRootModule
@@ -116,6 +129,13 @@ import SwiftUI
     }
     
     private func getCompactStackModules() -> [NavigationModule] {
+        if prefersDetailOnly, let detailModule {
+            if let detailNavigationStackCoordinator = detailModule.coordinator as? NavigationStackCoordinator {
+                return detailNavigationStackCoordinator.stackModules
+            }
+            return []
+        }
+        
         // Start building the new compact layout navigation stack
         var stackModules: [NavigationModule] = []
         // If the sidebar is a stackCoordinator then use it's root as the compact layout root
@@ -160,8 +180,9 @@ import SwiftUI
     
     /// Default NavigationSplitCoordinator initialiser
     /// - Parameter placeholderCoordinator: coordinator to use if no siderbar or detail is set
-    init(placeholderCoordinator: CoordinatorProtocol) {
+    init(placeholderCoordinator: CoordinatorProtocol, prefersDetailOnly: Bool = false) {
         placeholderModule = NavigationModule(placeholderCoordinator)
+        self.prefersDetailOnly = prefersDetailOnly
     }
     
     /// Set the coordinator to be used on the split's left pannel

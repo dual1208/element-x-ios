@@ -62,7 +62,7 @@ struct HomeScreenRecoveryKeyConfirmationBanner: View {
                     .foregroundColor(.compound.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
-                if state == .setUpRecovery {
+                if state == .setUpRecovery, !context.viewState.isManagedFamilyMode {
                     Button {
                         context.send(viewAction: .skipRecoveryKeyConfirmation)
                     } label: {
@@ -89,7 +89,7 @@ struct HomeScreenRecoveryKeyConfirmationBanner: View {
             .buttonStyle(.compound(.primary, size: .medium))
             .accessibilityIdentifier(A11yIdentifiers.homeScreen.recoveryKeyConfirmationBannerContinue)
             
-            if state == .recoveryOutOfSync {
+            if state == .recoveryOutOfSync, !context.viewState.isManagedFamilyMode {
                 Button {
                     context.send(viewAction: .resetEncryption)
                 } label: {

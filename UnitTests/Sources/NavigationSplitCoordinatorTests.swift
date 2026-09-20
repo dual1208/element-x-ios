@@ -271,6 +271,24 @@ struct NavigationSplitCoordinatorTests {
     }
     
     @Test
+    func detailOnlyUsesRoomAsCompactRootAndHidesSidebar() {
+        let splitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: SomeTestCoordinator(), prefersDetailOnly: true)
+        let sidebarCoordinator = NavigationStackCoordinator()
+        sidebarCoordinator.setRootCoordinator(SomeTestCoordinator())
+        let detailCoordinator = NavigationStackCoordinator()
+        detailCoordinator.setRootCoordinator(SomeTestCoordinator())
+        detailCoordinator.push(SomeTestCoordinator())
+        
+        splitCoordinator.setSidebarCoordinator(sidebarCoordinator)
+        splitCoordinator.setDetailCoordinator(detailCoordinator)
+        
+        assertCoordinatorsEqual(splitCoordinator.compactLayoutRootCoordinator, detailCoordinator.rootCoordinator)
+        #expect(splitCoordinator.compactLayoutStackCoordinators.count == 1)
+        assertCoordinatorsEqual(splitCoordinator.compactLayoutStackCoordinators.first, detailCoordinator.stackCoordinators.first)
+        #expect(splitCoordinator.columnVisibility == .detailOnly)
+    }
+    
+    @Test
     func removesDetailRootFromCompactStack() async {
         let sidebarCoordinator = NavigationStackCoordinator()
         sidebarCoordinator.setRootCoordinator(SomeTestCoordinator())

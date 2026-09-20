@@ -10,6 +10,7 @@ import Foundation
 import OrderedCollections
 
 enum RoomScreenViewModelAction: Equatable {
+    case displayAppSettings
     case focusEvent(eventID: String)
     case displayThreadList
     case displayThread(threadRootEventID: String, focussedEventID: String)
@@ -25,6 +26,7 @@ enum RoomScreenViewModelAction: Equatable {
 }
 
 enum RoomScreenViewAction {
+    case displayAppSettings
     case tappedPinnedEventsBanner
     case viewAllPins
     case displayRoomDetails
@@ -42,6 +44,7 @@ enum RoomScreenViewAction {
 struct RoomScreenViewState: BindableState {
     var roomTitle = ""
     var roomAvatar: RoomAvatar
+    var showsAppSettingsButton = false
     var dmRecipientDetails = RoomHeaderView.DMRecipientDetails()
     
     var lastScrollDirection: ScrollDirection?

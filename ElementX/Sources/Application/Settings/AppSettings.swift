@@ -50,6 +50,16 @@ nonisolated enum AppBuildType {
     }
 }
 
+/// Configuration for the managed family build. Room IDs are public Matrix identifiers,
+/// while credentials and recovery material remain in the SDK's persistent stores.
+nonisolated struct ManagedFamilyConfiguration: Equatable, Sendable {
+    let accountProvider: String
+    let roomID: String
+    
+    static let production = ManagedFamilyConfiguration(accountProvider: "8.163.2.191",
+                                                       roomID: "!zeH0LfJ1UQUIIR1Zm0or2b843_84zsDIYH4qxw-kDew")
+}
+
 /// Store Element specific app settings.
 ///
 /// State is persisted in `UserDefaults`, which is thread-safe per Apple's documentation, hence `@unchecked`.
@@ -58,6 +68,9 @@ final nonisolated class AppSettings: @unchecked Sendable {
     
     /// UserDefaults to be used on reads and writes.
     private let store: UserDefaultsProtocol
+    
+    /// Non-`nil` for the thin managed-family variant. Tests and previews opt out by default.
+    let managedFamilyConfiguration: ManagedFamilyConfiguration?
     
     static var appBuildType: AppBuildType {
         AppBuildType.current
@@ -230,7 +243,7 @@ final nonisolated class AppSettings: @unchecked Sendable {
     /// Whether or not the Create Account button is shown on the start screen.
     ///
     /// **Note:** Setting this to false doesn't prevent someone from creating an account when the selected homeserver's MAS allows registration.
-    let showCreateAccountButton = true
+    private(set) var showCreateAccountButton = true
     
     // MARK: - Notifications
     
@@ -278,9 +291,9 @@ final nonisolated class AppSettings: @unchecked Sendable {
     
     // MARK: - Bug report
     
-    let bugReportRageshakeURL: RemotePreference<RageshakeConfiguration> = .init(Secrets.rageshakeURL.map { .url(URL(string: $0)!) } ?? .disabled) // swiftlint:disable:this force_unwrapping
-    let bugReportSentryURL: URL? = Secrets.sentryDSN.map { URL(string: $0)! } // swiftlint:disable:this force_unwrapping
-    let bugReportSentryRustURL: URL? = Secrets.sentryRustDSN.map { URL(string: $0)! } // swiftlint:disable:this force_unwrapping
+    let bugReportRageshakeURL: RemotePreference<RageshakeConfiguration>
+    let bugReportSentryURL: URL?
+    let bugReportSentryRustURL: URL?
     /// The name allocated by the bug report server
     private(set) var bugReportApplicationID = "element-x-ios"
     
@@ -299,7 +312,7 @@ final nonisolated class AppSettings: @unchecked Sendable {
     // MARK: - Analytics
     
     /// The configuration to use for analytics. Set to `nil` to disable analytics.
-    let analyticsConfiguration: AnalyticsConfiguration? = AppSettings.makeAnalyticsConfiguration()
+    let analyticsConfiguration: AnalyticsConfiguration?
     /// The URL to open with more information about analytics terms. When this is `nil` the "Learn more" link will be hidden.
     private(set) var analyticsTermsURL: URL? = "https://element.io/cookie-policy"
     /// Whether or not there the app is able ask for user consent to enable analytics or sentry reporting.
@@ -458,12 +471,27 @@ final nonisolated class AppSettings: @unchecked Sendable {
     @UserPreference(defaultValue: AppBuildType.current != .release)
     var developerOptionsEnabled: Bool
     
-    init(store: UserDefaultsProtocol) {
+    init(store: UserDefaultsProtocol, managedFamilyConfiguration: ManagedFamilyConfiguration? = .production) {
         self.store = store
+        self.managedFamilyConfiguration = managedFamilyConfiguration
+        if let managedFamilyConfiguration {
+            accountProviders = [managedFamilyConfiguration.accountProvider]
+            allowOtherAccountProviders = false
+            showCreateAccountButton = false
+            bugReportRageshakeURL = .init(.disabled)
+            bugReportSentryURL = nil
+            bugReportSentryRustURL = nil
+            analyticsConfiguration = nil
+        } else {
+            bugReportRageshakeURL = .init(Secrets.rageshakeURL.map { .url(URL(string: $0)!) } ?? .disabled) // swiftlint:disable:this force_unwrapping
+            bugReportSentryURL = Secrets.sentryDSN.map { URL(string: $0)! } // swiftlint:disable:this force_unwrapping
+            bugReportSentryRustURL = Secrets.sentryRustDSN.map { URL(string: $0)! } // swiftlint:disable:this force_unwrapping
+            analyticsConfiguration = Self.makeAnalyticsConfiguration()
+        }
     }
     
-    static func volatile() -> AppSettings {
-        AppSettings(store: VolatileUserDefaults())
+    static func volatile(managedFamilyConfiguration: ManagedFamilyConfiguration? = nil) -> AppSettings {
+        AppSettings(store: VolatileUserDefaults(), managedFamilyConfiguration: managedFamilyConfiguration)
     }
 }
 

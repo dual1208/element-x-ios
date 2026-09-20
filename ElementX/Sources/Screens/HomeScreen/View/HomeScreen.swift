@@ -74,11 +74,13 @@ struct HomeScreen: View {
         .backportSharedBackgroundVisibility(.hidden)
         
         ToolbarItem(placement: .primaryAction) {
-            if #available(iOS 26, *) {
-                newRoomButton
-            } else {
-                newRoomButton
-                    .buttonStyle(.compound(.super, size: .toolbarIcon))
+            if !context.viewState.isManagedFamilyMode {
+                if #available(iOS 26, *) {
+                    newRoomButton
+                } else {
+                    newRoomButton
+                        .buttonStyle(.compound(.super, size: .toolbarIcon))
+                }
             }
         }
         

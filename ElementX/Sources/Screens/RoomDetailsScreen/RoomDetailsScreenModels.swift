@@ -70,6 +70,7 @@ struct RoomDetailsScreenViewState: BindableState {
     var knockRequestsCount = 0
     
     var reportRoomEnabled = false
+    var canLeaveRoom = true
     
     var canSeeKnockingRequests: Bool {
         dmRecipientInfo == nil && isKnockableRoom && (canInviteUsers || canKickUsers || canBanUsers)

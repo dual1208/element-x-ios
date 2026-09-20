@@ -17,6 +17,7 @@ struct RoomDetailsScreenCoordinatorParameters {
     let userIndicatorController: UserIndicatorControllerProtocol
     let notificationSettings: NotificationSettingsProxyProtocol
     let attributedStringBuilder: AttributedStringBuilderProtocol
+    let appSettings: AppSettings
 }
 
 enum RoomDetailsScreenCoordinatorAction {
@@ -57,7 +58,8 @@ final class RoomDetailsScreenCoordinator: CoordinatorProtocol {
                                                analyticsService: parameters.analyticsService,
                                                userIndicatorController: parameters.userIndicatorController,
                                                notificationSettingsProxy: parameters.notificationSettings,
-                                               attributedStringBuilder: parameters.attributedStringBuilder)
+                                               attributedStringBuilder: parameters.attributedStringBuilder,
+                                               appSettings: parameters.appSettings)
     }
     
     // MARK: - Public

@@ -97,9 +97,28 @@ struct IdentityConfirmationScreenViewModelTests {
         #expect(context.viewState.availableActions == nil)
     }
     
+    @Test
+    mutating func managedFamilyModeDisablesIdentityResetAndVerificationSkip() async throws {
+        let appSettings = AppSettings.volatile(managedFamilyConfiguration: .init(accountProvider: "example.com", roomID: "!family"))
+        setupViewModel(appSettings: appSettings)
+        
+        #expect(!context.viewState.allowsIdentityReset)
+        #expect(!context.viewState.allowsVerificationSkip)
+        
+        let failure = deferFailure(viewModel.actionsPublisher, timeout: .seconds(1)) { action in
+            switch action {
+            case .skip, .reset: true
+            default: false
+            }
+        }
+        context.send(viewAction: .skip)
+        context.send(viewAction: .reset)
+        try await failure.fulfill()
+    }
+    
     // MARK: - Private
     
-    mutating func setupViewModel(hasDevicesToVerifyAgainst: Bool = true) {
+    mutating func setupViewModel(hasDevicesToVerifyAgainst: Bool = true, appSettings: AppSettings = .volatile()) {
         let initialState = SessionSecurityState(verificationState: .unverified, recoveryState: .unknown)
         securityStateSubject = CurrentValueSubject<SessionSecurityState, Never>(initialState)
         
@@ -109,7 +128,7 @@ struct IdentityConfirmationScreenViewModelTests {
         userSession.sessionSecurityStatePublisher = securityStateSubject.asCurrentValuePublisher()
         
         viewModel = IdentityConfirmationScreenViewModel(userSession: userSession,
-                                                        appSettings: .volatile(),
+                                                        appSettings: appSettings,
                                                         userIndicatorController: UserIndicatorControllerMock())
     }
 }

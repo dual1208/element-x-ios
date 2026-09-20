@@ -3,12 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>aps-environment</key>
-	<string>development</string>
+	<string>$(APS_ENVIRONMENT)</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:8.163.2.191</string>
 		<string>applinks:matrix.to</string>
-		<string>webcredentials:8.163.2.191</string>
 	</array>
 	<key>com.apple.developer.usernotifications.communication</key>
 	<true/>

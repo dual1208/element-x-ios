@@ -275,10 +275,12 @@ class AuthenticationFlowCoordinator: FlowCoordinatorProtocol {
                 
                 switch action {
                 case .loginWithQR:
+                    guard appSettings.managedFamilyConfiguration == nil else { return }
                     stateMachine.tryEvent(.loginWithQR)
                 case .login:
                     stateMachine.tryEvent(.selectServer(.login))
                 case .register:
+                    guard appSettings.managedFamilyConfiguration == nil else { return }
                     stateMachine.tryEvent(.selectServer(.register))
                     
                 case .loginDirectlyWithOAuth(let oAuthData, let window):
