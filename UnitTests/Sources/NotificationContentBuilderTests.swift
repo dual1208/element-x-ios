@@ -16,10 +16,8 @@ import UserNotifications
 struct NotificationContentBuilderTests {
     var notificationContentBuilder: NotificationContentBuilder
     var mediaProvider: MediaProviderMock
-    var notificationContent: UNMutableNotificationContent
     
     init() {
-        notificationContent = .init()
         let stringBuilder = RoomMessageEventStringBuilder(attributedStringBuilder: AttributedStringBuilder(mentionBuilder: PlainMentionBuilder()),
                                                           style: .plain)
         mediaProvider = MediaProviderMock(.init())
@@ -30,6 +28,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func dmMessageNotification() async {
+        var notificationContent = UNMutableNotificationContent()
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!test:matrix.org",
                                                                receiverID: "@bob:matrix.org",
                                                                senderDisplayName: "Alice",
@@ -57,6 +56,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func dmMessageNotificationWithMention() async {
+        var notificationContent = UNMutableNotificationContent()
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!test:matrix.org",
                                                                receiverID: "@bob:matrix.org",
                                                                senderDisplayName: "Alice",
@@ -86,6 +86,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func dmMessageNotificationWithThread() async {
+        var notificationContent = UNMutableNotificationContent()
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!test:matrix.org",
                                                                receiverID: "@bob:matrix.org",
                                                                senderDisplayName: "Alice",
@@ -115,6 +116,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func dmMessageNotificationWithThreadAndMention() async {
+        var notificationContent = UNMutableNotificationContent()
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!test:matrix.org",
                                                                receiverID: "@bob:matrix.org",
                                                                senderDisplayName: "Alice",
@@ -144,6 +146,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func roomMessageNotification() async {
+        var notificationContent = UNMutableNotificationContent()
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
                                                                receiverID: "@bob:matrix.org",
                                                                senderDisplayName: "Alice",
@@ -171,6 +174,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func roomMessageNotificationWithMention() async {
+        var notificationContent = UNMutableNotificationContent()
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
                                                                receiverID: "@bob:matrix.org",
                                                                senderDisplayName: "Alice",
@@ -198,6 +202,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func roomMessageNotificationWithThread() async {
+        var notificationContent = UNMutableNotificationContent()
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
                                                                receiverID: "@bob:matrix.org",
                                                                senderDisplayName: "Alice",
@@ -225,6 +230,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func liveLocationStartNotification() async {
+        var notificationContent = UNMutableNotificationContent()
         let event = TimelineEventSDKMock()
         event.eventIdReturnValue = UUID().uuidString
         event.contentReturnValue = .state(content: .beaconInfo)
@@ -252,6 +258,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func otherStateEventNotification() async {
+        var notificationContent = UNMutableNotificationContent()
         let event = TimelineEventSDKMock()
         event.eventIdReturnValue = UUID().uuidString
         event.contentReturnValue = .state(content: .roomName)
@@ -275,6 +282,7 @@ struct NotificationContentBuilderTests {
     
     @Test
     mutating func roomMessageNotificationWithThreadAndMention() async {
+        var notificationContent = UNMutableNotificationContent()
         let notificationItem = NotificationItemProxyMock(.init(roomID: "!testroom:matrix.org",
                                                                receiverID: "@bob:matrix.org",
                                                                senderDisplayName: "Alice",

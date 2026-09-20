@@ -7,6 +7,7 @@ configuration := "Debug"
 derived_data := "DerivedData/tcnowifi"
 app_path := derived_data + "/Build/Products/Debug-iphoneos/ElementX.app"
 bundle_id := "com.dual1208.elementx"
+xcodebuild := "/usr/sbin/taskpolicy -b /usr/bin/xcodebuild"
 archive_path := env_var_or_default("IOS_ARCHIVE_PATH", ".codex-archives/ElementX.xcarchive")
 export_path := env_var_or_default("IOS_EXPORT_PATH", ".codex-archives/export")
 export_options := env_var_or_default("IOS_EXPORT_OPTIONS_PLIST", "Config/AppStoreExportOptions.plist")
@@ -35,12 +36,12 @@ lint:
 build:
     just device
     mkdir -p .codex-logs
-    set -o pipefail; xcodebuild -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs 2 -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs 1 -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
 
 test-managed:
     just device
     mkdir -p .codex-logs
-    set -o pipefail; xcodebuild -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs 2 -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates test -only-testing:UnitTests/AnalyticsTests -only-testing:UnitTests/AuthenticationStartScreenViewModelTests -only-testing:UnitTests/HomeScreenViewModelTests -only-testing:UnitTests/IdentityConfirmationScreenViewModelTests -only-testing:UnitTests/NavigationSplitCoordinatorTests 2>&1 | tee .codex-logs/managed-tests.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs 1 -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates test -only-testing:UnitTests/AnalyticsTests -only-testing:UnitTests/AuthenticationStartScreenViewModelTests -only-testing:UnitTests/HomeScreenViewModelTests -only-testing:UnitTests/IdentityConfirmationScreenViewModelTests -only-testing:UnitTests/NavigationSplitCoordinatorTests 2>&1 | tee .codex-logs/managed-tests.log | xcbeautify
 
 install:
     just device
@@ -75,25 +76,25 @@ entitlements:
 
 archive:
     mkdir -p "$(dirname {{ archive_path }})" .codex-logs
-    set -o pipefail; xcodebuild -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs 2 -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs 1 -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
 
 export-archive:
     test -d {{ archive_path }}
     test -f {{ export_options }}
     mkdir -p {{ export_path }} .codex-logs
-    set -o pipefail; xcodebuild -exportArchive -archivePath {{ archive_path }} -exportPath {{ export_path }} -exportOptionsPlist {{ export_options }} -allowProvisioningUpdates 2>&1 | tee .codex-logs/export.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -exportArchive -archivePath {{ archive_path }} -exportPath {{ export_path }} -exportOptionsPlist {{ export_options }} -allowProvisioningUpdates 2>&1 | tee .codex-logs/export.log | xcbeautify
 
 validate-archive:
     test -d {{ archive_path }}
     test -f {{ validation_options }}
     mkdir -p .codex-archives/validation .codex-logs
-    set -o pipefail; xcodebuild -exportArchive -archivePath {{ archive_path }} -exportPath .codex-archives/validation -exportOptionsPlist {{ validation_options }} -allowProvisioningUpdates 2>&1 | tee .codex-logs/validation.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -exportArchive -archivePath {{ archive_path }} -exportPath .codex-archives/validation -exportOptionsPlist {{ validation_options }} -allowProvisioningUpdates 2>&1 | tee .codex-logs/validation.log | xcbeautify
 
 export-device-archive:
     test -d {{ archive_path }}
     test -f {{ device_export_options }}
     mkdir -p {{ device_export_path }} .codex-logs
-    set -o pipefail; xcodebuild -exportArchive -archivePath {{ archive_path }} -exportPath {{ device_export_path }} -exportOptionsPlist {{ device_export_options }} -allowProvisioningUpdates 2>&1 | tee .codex-logs/device-export.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -exportArchive -archivePath {{ archive_path }} -exportPath {{ device_export_path }} -exportOptionsPlist {{ device_export_options }} -allowProvisioningUpdates 2>&1 | tee .codex-logs/device-export.log | xcbeautify
 
 install-device-archive:
     just device
