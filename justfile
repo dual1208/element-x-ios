@@ -100,9 +100,10 @@ install-device-archive:
     just device
     test -f {{ device_export_path }}/ElementX.ipa
     mkdir -p .codex-archives .codex-logs
-    install_root=$(mktemp -d .codex-archives/device-install.XXXXXX)
-    ditto -x -k {{ device_export_path }}/ElementX.ipa "$install_root"
-    app_path=$(/usr/bin/find "$install_root/Payload" -maxdepth 1 -name '*.app' -type d -print -quit); test -n "$app_path"
-    xcrun devicectl device install app --device {{ device_id }} --timeout 180 "$app_path" 2>&1 | tee .codex-logs/device-install-archive.log
+    install_root=$(mktemp -d .codex-archives/device-install.XXXXXX); \
+        ditto -x -k {{ device_export_path }}/ElementX.ipa "$install_root"; \
+        app_path=$(/usr/bin/find "$install_root/Payload" -maxdepth 1 -name '*.app' -type d -print -quit); \
+        test -n "$app_path"; \
+        xcrun devicectl device install app --device {{ device_id }} --timeout 180 "$app_path" 2>&1 | tee .codex-logs/device-install-archive.log
 
 ci: lint build
