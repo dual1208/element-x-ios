@@ -223,9 +223,48 @@ targets:
             echo "error: The private family-client.p12 build input is missing or unreadable."
             exit 1
         fi
+        if [ "$(/usr/bin/stat -f '%Lp' "$FAMILY_CLIENT_P12_PATH")" != "600" ]; then
+            echo "error: The private family-client.p12 build input must have mode 600."
+            exit 1
+        fi
+        expected_common_name="ios-${MARKETING_VERSION}-${CURRENT_PROJECT_VERSION}"
+        validation_directory="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/family-client.XXXXXX")"
+        /bin/chmod 700 "$validation_directory"
+        trap '/bin/rm -rf "$validation_directory"' EXIT
+        leaf_certificate="$validation_directory/leaf.pem"
+        ca_certificates="$validation_directory/ca.pem"
+        umask 077
+        identity_info="$(/usr/bin/openssl pkcs12 -in "$FAMILY_CLIENT_P12_PATH" -passin pass: -info -noout 2>&1)" || {
+            echo "error: The private family-client.p12 build input is invalid."
+            exit 1
+        }
+        case "$identity_info" in
+            *"Shrouded Keybag"*|*"Key bag"*) ;;
+            *) echo "error: The private family-client.p12 build input has no private key."; exit 1 ;;
+        esac
+        /usr/bin/openssl pkcs12 -in "$FAMILY_CLIENT_P12_PATH" -passin pass: -clcerts -nokeys -out "$leaf_certificate" >/dev/null 2>&1
+        /usr/bin/openssl pkcs12 -in "$FAMILY_CLIENT_P12_PATH" -passin pass: -cacerts -nokeys -out "$ca_certificates" >/dev/null 2>&1
+        subject="$(/usr/bin/openssl x509 -in "$leaf_certificate" -noout -subject -nameopt RFC2253)"
+        case ",${subject#subject=}," in
+            *",CN=$expected_common_name,"*) ;;
+            *) echo "error: family-client.p12 does not match this app version and build."; exit 1 ;;
+        esac
+        certificate_text="$(/usr/bin/openssl x509 -in "$leaf_certificate" -noout -text)"
+        case "$certificate_text" in
+            *"TLS Web Client Authentication"*) ;;
+            *) echo "error: family-client.p12 is missing the clientAuth extended key usage."; exit 1 ;;
+        esac
+        /usr/bin/openssl x509 -in "$leaf_certificate" -noout -checkend 0 >/dev/null || {
+            echo "error: family-client.p12 is expired."
+            exit 1
+        }
+        /usr/bin/openssl verify -purpose sslclient -CAfile "$ca_certificates" "$leaf_certificate" >/dev/null || {
+            echo "error: family-client.p12 failed client certificate validation."
+            exit 1
+        }
         destination="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/family-client.p12"
         mkdir -p "$(dirname "$destination")"
-        /usr/bin/install -m 600 "$FAMILY_CLIENT_P12_PATH" "$destination"
+        /usr/bin/install -m 644 "$FAMILY_CLIENT_P12_PATH" "$destination"
     - name: ⚠️ SwiftLint
       runOnlyWhenInstalling: false
       basedOnDependencyAnalysis: false

@@ -918,7 +918,11 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
                 guard let self else { return }
                 switch callback {
                 case .didReceiveAuthError(let isSoftLogout):
-                    stateMachine.processEvent(.signOut(isSoft: isSoftLogout, disableAppLock: false))
+                    // The native managed login always creates a new Matrix device. Its crypto/session
+                    // stores must therefore be fresh rather than reusing a soft-logged-out device store.
+                    // Remove the expired local session through the normal sign-out path before login.
+                    let shouldSoftLogout = appSettings.managedFamilyConfiguration == nil && isSoftLogout
+                    stateMachine.processEvent(.signOut(isSoft: shouldSoftLogout, disableAppLock: false))
                 }
             }
     }
