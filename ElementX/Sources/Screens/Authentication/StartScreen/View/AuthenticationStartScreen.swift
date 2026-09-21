@@ -121,18 +121,20 @@ struct AuthenticationStartScreen: View {
                 .buttonStyle(.compound(.tertiary))
             }
             
-            versionText
-                .font(.compound.bodySM)
-                .foregroundColor(.compound.textSecondary)
-                .onTapGesture(count: 7) {
-                    context.send(viewAction: .reportProblem)
-                }
-                .accessibilityIdentifier(A11yIdentifiers.authenticationStartScreen.appVersion)
-                .overlay(alignment: .trailing) {
-                    developerOptionsButton
-                        .scaledOffset(x: 32, y: -0.5, relativeTo: .compound.bodySM)
-                }
-                .padding(.top, 16)
+            if !context.viewState.isManagedFamilyMode {
+                versionText
+                    .font(.compound.bodySM)
+                    .foregroundColor(.compound.textSecondary)
+                    .onTapGesture(count: 7) {
+                        context.send(viewAction: .reportProblem)
+                    }
+                    .accessibilityIdentifier(A11yIdentifiers.authenticationStartScreen.appVersion)
+                    .overlay(alignment: .trailing) {
+                        developerOptionsButton
+                            .scaledOffset(x: 32, y: -0.5, relativeTo: .compound.bodySM)
+                    }
+                    .padding(.top, 16)
+            }
         }
         .padding(.horizontal, verticalSizeClass == .compact ? 128 : 24)
         .readableFrame()

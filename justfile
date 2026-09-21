@@ -1,6 +1,7 @@
 set shell := ["/bin/zsh", "-euc"]
 
 device_id := env_var_or_default("IOS_DEVICE_ID", "")
+device_kind := env_var_or_default("IOS_DEVICE_KIND", "iphone")
 destination := "platform=iOS,id=" + device_id
 scheme := "ElementX"
 configuration := "Debug"
@@ -9,6 +10,7 @@ build_jobs := env_var_or_default("IOS_BUILD_JOBS", "2")
 app_path := derived_data + "/Build/Products/Debug-iphoneos/ElementX.app"
 bundle_id := "com.dual1208.elementx"
 xcodebuild := "/usr/sbin/taskpolicy -b /usr/bin/xcodebuild"
+debug_xcodebuild := "/usr/bin/xcodebuild"
 archive_path := env_var_or_default("IOS_ARCHIVE_PATH", ".codex-archives/ElementX.xcarchive")
 export_path := env_var_or_default("IOS_EXPORT_PATH", ".codex-archives/export")
 export_options := env_var_or_default("IOS_EXPORT_OPTIONS_PLIST", "Config/AppStoreExportOptions.plist")
@@ -20,8 +22,9 @@ default:
     @just --list
 
 device:
-    test -n "$IOS_DEVICE_ID" || { print -u2 'Set IOS_DEVICE_ID to the paired physical iPhone UDID.'; exit 1; }
-    gate_output=$(/Users/xie/.local/bin/apple-debug-check iphone); print -r -- "$gate_output"; print -r -- "$gate_output" | rg -F -- "-destination 'platform=iOS,id=$IOS_DEVICE_ID'"
+    test -n "$IOS_DEVICE_ID" || { print -u2 'Set IOS_DEVICE_ID to the paired physical Apple device UDID.'; exit 1; }
+    case "{{ device_kind }}" in iphone|ipad) ;; *) print -u2 'Set IOS_DEVICE_KIND to iphone or ipad.'; exit 1 ;; esac
+    gate_output=$(/Users/xie/.local/bin/apple-debug-check {{ device_kind }}); print -r -- "$gate_output"; print -r -- "$gate_output" | rg -F -- "-destination 'platform=iOS,id=$IOS_DEVICE_ID'"
     xcrun devicectl list devices | rg -F "$IOS_DEVICE_ID" | rg '(available|connected).*physical'
 
 generate:
@@ -37,7 +40,7 @@ lint:
 build:
     just device
     mkdir -p .codex-logs
-    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
+    set -o pipefail; {{ debug_xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
 
 test-managed:
     just device

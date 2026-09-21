@@ -22,13 +22,15 @@ struct RoomDetailsScreen: View {
             
             aboutSection
             
-            // The invitation flow is different for DMs
-            if context.viewState.dmRecipientInfo != nil {
-                inviteToNewRoomSection
-                
-                profileSection
-            } else {
-                peopleSection
+            if !context.viewState.isManagedFamilyMode {
+                // The invitation flow is different for DMs
+                if context.viewState.dmRecipientInfo != nil {
+                    inviteToNewRoomSection
+                    
+                    profileSection
+                } else {
+                    peopleSection
+                }
             }
             
             configurationSection
@@ -260,7 +262,9 @@ struct RoomDetailsScreen: View {
                         })
             }
             
-            if context.viewState.canEditRolesOrPermissions, context.viewState.dmRecipientInfo == nil {
+            if !context.viewState.isManagedFamilyMode,
+               context.viewState.canEditRolesOrPermissions,
+               context.viewState.dmRecipientInfo == nil {
                 ListRow(label: .default(title: L10n.screenRoomDetailsRolesAndPermissions, icon: \.admin),
                         kind: .navigationLink {
                             context.send(viewAction: .processTapRolesAndPermissions)

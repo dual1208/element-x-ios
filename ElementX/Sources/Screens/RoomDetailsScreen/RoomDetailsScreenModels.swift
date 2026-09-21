@@ -42,6 +42,7 @@ struct DMRecipientInfo {
 struct RoomDetailsScreenViewState: BindableState {
     var details: RoomDetails
     var showsEncryptionBadge: Bool
+    var isManagedFamilyMode: Bool
     
     var isEncrypted: Bool
     var isDirect: Bool
@@ -74,19 +75,19 @@ struct RoomDetailsScreenViewState: BindableState {
     var canLeaveRoom = true
     
     var canSeeKnockingRequests: Bool {
-        dmRecipientInfo == nil && isKnockableRoom && (canInviteUsers || canKickUsers || canBanUsers)
+        !isManagedFamilyMode && dmRecipientInfo == nil && isKnockableRoom && (canInviteUsers || canKickUsers || canBanUsers)
     }
     
     var canSeeSecurityAndPrivacy: Bool {
-        dmRecipientInfo == nil && canEditSecurityAndPrivacy
+        !isManagedFamilyMode && dmRecipientInfo == nil && canEditSecurityAndPrivacy
     }
     
     var canEditBaseInfo: Bool {
-        !isDirect && (canEditRoomName || canEditRoomTopic || canEditRoomAvatar)
+        !isManagedFamilyMode && !isDirect && (canEditRoomName || canEditRoomTopic || canEditRoomAvatar)
     }
     
     var hasTopicSection: Bool {
-        topic != nil || canEditRoomTopic
+        !isManagedFamilyMode && (topic != nil || canEditRoomTopic)
     }
     
     var bindings: RoomDetailsScreenViewStateBindings
@@ -103,13 +104,15 @@ struct RoomDetailsScreenViewState: BindableState {
             shortcuts.append(.videoCall)
         }
         // The invite flow is different for DMs
-        if dmRecipientInfo == nil, canInviteUsers {
+        if !isManagedFamilyMode, dmRecipientInfo == nil, canInviteUsers {
             shortcuts.append(.invite)
         }
-        if let permalink = dmRecipientInfo?.member.permalink {
-            shortcuts.append(.share(link: permalink))
-        } else if let permalink {
-            shortcuts.append(.share(link: permalink))
+        if !isManagedFamilyMode {
+            if let permalink = dmRecipientInfo?.member.permalink {
+                shortcuts.append(.share(link: permalink))
+            } else if let permalink {
+                shortcuts.append(.share(link: permalink))
+            }
         }
         return shortcuts
     }

@@ -60,8 +60,10 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
         
         let topic = attributedStringBuilder.fromPlain(roomProxy.infoPublisher.value.topic)
         
+        let isManagedFamilyMode = appSettings.managedFamilyConfiguration != nil
         let viewState = RoomDetailsScreenViewState(details: roomProxy.details,
-                                                   showsEncryptionBadge: appSettings.managedFamilyConfiguration == nil,
+                                                   showsEncryptionBadge: !isManagedFamilyMode,
+                                                   isManagedFamilyMode: isManagedFamilyMode,
                                                    isEncrypted: roomProxy.infoPublisher.value.isEncrypted,
                                                    isDirect: roomProxy.infoPublisher.value.isDirect,
                                                    topic: topic,
@@ -87,9 +89,11 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
             }
             .store(in: &cancellables)
         
-        Task {
-            if case let .success(permalinkURL) = await roomProxy.matrixToPermalink() {
-                state.permalink = permalinkURL
+        if !isManagedFamilyMode {
+            Task {
+                if case let .success(permalinkURL) = await roomProxy.matrixToPermalink() {
+                    state.permalink = permalinkURL
+                }
             }
         }
         
@@ -114,6 +118,7 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
         case .processTapPeople:
             actionsSubject.send(.requestMemberDetailsPresentation)
         case .processTapInvite:
+            guard !state.isManagedFamilyMode else { return }
             if let dmRecipient = state.dmRecipientInfo {
                 actionsSubject.send(.requestInviteToNewRoomPresentation(selectedInvitee: .init(member: dmRecipient.member)))
             } else {
@@ -130,6 +135,7 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
         case .processTapUnignore:
             state.bindings.ignoreUserRoomAlertItem = .init(action: .unignore)
         case .processTapEdit, .processTapAddTopic:
+            guard !state.isManagedFamilyMode else { return }
             actionsSubject.send(.requestEditDetailsPresentation)
         case .ignoreConfirmed:
             Task { await ignore() }
@@ -150,6 +156,7 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
         case .toggleFavourite(let isFavourite):
             Task { await toggleFavourite(isFavourite) }
         case .processTapRolesAndPermissions:
+            guard !state.isManagedFamilyMode else { return }
             actionsSubject.send(.requestRolesAndPermissionsPresentation)
         case .processTapCall(let isVoiceCall):
             actionsSubject.send(.startCall(isVoiceCall: isVoiceCall))
@@ -159,8 +166,10 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
         case .processTapMediaEvents:
             actionsSubject.send(.displayMediaEventsTimeline)
         case .processTapRequestsToJoin:
+            guard !state.isManagedFamilyMode else { return }
             actionsSubject.send(.displayKnockingRequests)
         case .processTapSecurityAndPrivacy:
+            guard !state.isManagedFamilyMode else { return }
             actionsSubject.send(.displaySecurityAndPrivacy)
         case .processTapRecipientProfile:
             guard let userID = state.dmRecipientInfo?.member.id else {

@@ -898,8 +898,13 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     
     private func buildTimelineViews(timelineItems: [RoomTimelineItemProtocol], isSwitchingTimelines: Bool = false) {
         var timelineItemsDictionary = OrderedDictionary<TimelineItemIdentifier.UniqueID, RoomTimelineItemViewState>()
+        let displayedTimelineItems = if appSettings.managedFamilyConfiguration != nil {
+            timelineItems.filter { !($0 is StateRoomTimelineItem) && !($0 is TimelineStartRoomTimelineItem) }
+        } else {
+            timelineItems
+        }
         
-        timelineItems.filter { $0 is RedactedRoomTimelineItem }.forEach { timelineItem in
+        displayedTimelineItems.filter { $0 is RedactedRoomTimelineItem }.forEach { timelineItem in
             // Stops the audio player when a voice message is redacted.
             guard let playerState = mediaPlayerProvider.playerState(for: .timelineItemIdentifier(timelineItem.id)) else {
                 return
@@ -911,7 +916,7 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             }
         }
         
-        let itemsGroupedByTimelineDisplayStyle = timelineItems.chunked { current, next in
+        let itemsGroupedByTimelineDisplayStyle = displayedTimelineItems.chunked { current, next in
             canGroupItem(timelineItem: current, with: next)
         }
         

@@ -73,7 +73,8 @@ struct SettingsScreen: View {
                             HStack(spacing: 6) {
                                 Text(context.viewState.userProfile.displayName ?? "")
                                 
-                                if let statusEmoji = context.viewState.userProfile.status.displayed?.emoji {
+                                if !context.viewState.isManagedFamilyMode,
+                                   let statusEmoji = context.viewState.userProfile.status.displayed?.emoji {
                                     Text(String(statusEmoji))
                                 }
                             }
@@ -226,7 +227,7 @@ struct SettingsScreen: View {
                         })
             }
         } footer: {
-            if !context.viewState.showDeveloperOptions {
+            if !context.viewState.isManagedFamilyMode, !context.viewState.showDeveloperOptions {
                 versionSection
             }
         }
