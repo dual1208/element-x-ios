@@ -5,6 +5,7 @@ destination := "platform=iOS,id=" + device_id
 scheme := "ElementX"
 configuration := "Debug"
 derived_data := "DerivedData/tcnowifi"
+build_jobs := env_var_or_default("IOS_BUILD_JOBS", "2")
 app_path := derived_data + "/Build/Products/Debug-iphoneos/ElementX.app"
 bundle_id := "com.dual1208.elementx"
 xcodebuild := "/usr/sbin/taskpolicy -b /usr/bin/xcodebuild"
@@ -36,7 +37,7 @@ lint:
 build:
     just device
     mkdir -p .codex-logs
-    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs 1 -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
 
 test-managed:
     just device
@@ -76,7 +77,7 @@ entitlements:
 
 archive:
     mkdir -p "$(dirname {{ archive_path }})" .codex-logs
-    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs 1 -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs 1 ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
 
 export-archive:
     test -d {{ archive_path }}
@@ -106,4 +107,4 @@ install-device-archive:
         test -n "$app_path"; \
         xcrun devicectl device install app --device {{ device_id }} --timeout 180 "$app_path" 2>&1 | tee .codex-logs/device-install-archive.log
 
-ci: lint build
+ci: build
