@@ -9,8 +9,7 @@ derived_data := "DerivedData/tcnowifi"
 build_jobs := env_var_or_default("IOS_BUILD_JOBS", "2")
 app_path := derived_data + "/Build/Products/Debug-iphoneos/ElementX.app"
 bundle_id := "com.dual1208.elementx"
-xcodebuild := "/usr/sbin/taskpolicy -b /usr/bin/xcodebuild"
-debug_xcodebuild := "/usr/bin/xcodebuild"
+xcodebuild := "/usr/bin/xcodebuild"
 archive_path := env_var_or_default("IOS_ARCHIVE_PATH", ".codex-archives/ElementX.xcarchive")
 export_path := env_var_or_default("IOS_EXPORT_PATH", ".codex-archives/export")
 export_options := env_var_or_default("IOS_EXPORT_OPTIONS_PLIST", "Config/AppStoreExportOptions.plist")
@@ -40,7 +39,7 @@ lint:
 build:
     just device
     mkdir -p .codex-logs
-    set -o pipefail; {{ debug_xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
 
 test-managed:
     just device
@@ -80,7 +79,7 @@ entitlements:
 
 archive:
     mkdir -p "$(dirname {{ archive_path }})" .codex-logs
-    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs 1 ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
 
 export-archive:
     test -d {{ archive_path }}
