@@ -712,7 +712,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                                                         primaryButton: .init(title: ManagedFamilyL10n.managedFamilyLogoutSubmit,
                                                                              role: .destructive) { [weak self] in
                                                             self?.actionsSubject.send(.logout)
-                                                        })
+                                                        },
+                                                        secondaryButton: .init(title: L10n.actionCancel, role: .cancel, action: nil))
             return
         }
         
