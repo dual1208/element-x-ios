@@ -190,24 +190,6 @@
       }
     },
     {
-      "identity" : "posthog-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/PostHog/posthog-ios",
-      "state" : {
-        "revision" : "c0218386c49115cce6b05a50b41f4f60bc995acb",
-        "version" : "3.69.6"
-      }
-    },
-    {
-      "identity" : "sentry-cocoa",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/getsentry/sentry-cocoa",
-      "state" : {
-        "revision" : "cd213f98af160e6497eeff0707bc3f6a205b159c",
-        "version" : "9.26.0"
-      }
-    },
-    {
       "identity" : "sfsafesymbols",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SFSafeSymbols/SFSafeSymbols",
