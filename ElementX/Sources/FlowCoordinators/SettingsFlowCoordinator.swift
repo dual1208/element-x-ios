@@ -75,6 +75,7 @@ class SettingsFlowCoordinator: FlowCoordinatorProtocol {
     private func presentSettingsScreen(animated: Bool) {
         let settingsScreenCoordinator = SettingsScreenCoordinator(parameters: .init(userSession: flowParameters.userSession,
                                                                                     appSettings: flowParameters.appSettings,
+                                                                                    appLockIsEnabled: appLockService.isEnabled,
                                                                                     isBugReportServiceEnabled: flowParameters.bugReportService.isEnabled,
                                                                                     isInSecondaryWindow: isInSecondaryWindow,
                                                                                     userIndicatorController: flowParameters.userIndicatorController))

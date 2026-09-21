@@ -90,6 +90,14 @@ struct RoomDetailsScreenViewState: BindableState {
         !isManagedFamilyMode && (topic != nil || canEditRoomTopic)
     }
     
+    var showsPinnedEvents: Bool {
+        if !isManagedFamilyMode {
+            return true
+        }
+        guard case .loaded(let numberOfItems) = pinnedEventsActionState else { return false }
+        return numberOfItems > 0
+    }
+    
     var bindings: RoomDetailsScreenViewStateBindings
     
     var dmRecipientInfo: DMRecipientInfo?

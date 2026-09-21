@@ -67,6 +67,7 @@ final class ComposerToolbarViewModel: ComposerToolbarViewModelType, ComposerTool
                                                               isRoomEncrypted: roomProxy.infoPublisher.value.isEncrypted,
                                                               showsEncryptionStatus: appSettings.managedFamilyConfiguration == nil,
                                                               isLocationSharingEnabled: appSettings.mapTilerConfiguration.publisher.value.isEnabled,
+                                                              allowsPollCreation: appSettings.managedFamilyConfiguration == nil,
                                                               bindings: .init()),
                    mediaProvider: mediaProvider)
         
@@ -215,6 +216,9 @@ final class ComposerToolbarViewModel: ComposerToolbarViewModelType, ComposerTool
                 set(mode: .default)
             }
         case .attach(let attachment):
+            if case .poll = attachment, !state.allowsPollCreation {
+                return
+            }
             state.bindings.composerFocused = false
             actionsSubject.send(.attach(attachment))
         case .handlePasteOrDrop(let providers):

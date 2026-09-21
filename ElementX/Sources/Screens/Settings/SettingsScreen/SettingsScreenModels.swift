@@ -42,6 +42,7 @@ struct SettingsScreenViewState: BindableState {
     var showAccountDeactivation: Bool
     var showDeveloperOptions: Bool
     let isManagedFamilyMode: Bool
+    let showAppLock: Bool
     
     var securitySectionMode = SettingsScreenSecuritySectionMode.none
     var showSecuritySectionBadge = false
@@ -63,6 +64,15 @@ struct SettingsScreenViewState: BindableState {
         } else {
             .pickStatusButton
         }
+    }
+    
+    var displayedUserID: String {
+        guard isManagedFamilyMode,
+              let localpart = userProfile.id.dropFirst().split(separator: ":").first,
+              !localpart.isEmpty else {
+            return userProfile.id
+        }
+        return String(localpart)
     }
 }
 

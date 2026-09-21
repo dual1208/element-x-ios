@@ -152,8 +152,10 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
         case .displayAvatar(let url):
             displayFullScreenAvatar(url)
         case .processTapPolls:
+            guard !state.isManagedFamilyMode else { return }
             actionsSubject.send(.requestPollsHistoryPresentation)
         case .toggleFavourite(let isFavourite):
+            guard !state.isManagedFamilyMode else { return }
             Task { await toggleFavourite(isFavourite) }
         case .processTapRolesAndPermissions:
             guard !state.isManagedFamilyMode else { return }
@@ -161,6 +163,7 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
         case .processTapCall(let isVoiceCall):
             actionsSubject.send(.startCall(isVoiceCall: isVoiceCall))
         case .processTapPinnedEvents:
+            guard state.showsPinnedEvents else { return }
             analyticsService.trackInteraction(name: .PinnedMessageRoomInfoButton)
             actionsSubject.send(.displayPinnedEventsTimeline)
         case .processTapMediaEvents:

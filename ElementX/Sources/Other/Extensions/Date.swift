@@ -57,20 +57,21 @@ extension Date {
     /// including the year when it the date is from a previous year (rather than over a year ago).
     func formattedDateSeparator() -> String {
         let calendar = Calendar.current
+        let locale = Bundle.overrideLocalizations?.first.map { Locale(identifier: $0) } ?? .current
         
         if calendar.isDateInToday(self) || calendar.isDateInYesterday(self) {
             // Simply "Today" or "Yesterday" if it was today or yesterday.
-            return DateFormatter.relative.string(from: self)
+            return DateFormatter.relative(locale: locale).string(from: self)
         } else if let sixDaysAgo = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: .now)),
                   sixDaysAgo <= self {
             // The named day if it was in the last 6 days.
-            return formatted(.dateTime.weekday(.wide))
+            return formatted(.dateTime.weekday(.wide).locale(locale))
         } else if calendar.component(.year, from: self) == calendar.component(.year, from: .now) {
             // The day and month if it was this year.
-            return formatted(.dateTime.weekday(.wide).day().month(.wide))
+            return formatted(.dateTime.weekday(.wide).day().month(.wide).locale(locale))
         } else {
             // The day, month and year if it is any older.
-            return formatted(.dateTime.weekday(.wide).day().month(.wide).year())
+            return formatted(.dateTime.weekday(.wide).day().month(.wide).year().locale(locale))
         }
     }
     
@@ -88,11 +89,12 @@ extension Date {
 private extension DateFormatter {
     /// There doesn't appear to be a way to get "Today" out of
     /// `Date.RelativeFormatStyle` so use the old way instead 😐
-    static let relative: DateFormatter = {
+    static func relative(locale: Locale) -> DateFormatter {
         let formatter = DateFormatter()
+        formatter.locale = locale
         formatter.doesRelativeDateFormatting = true
         formatter.dateStyle = .long
         formatter.timeStyle = .none
         return formatter
-    }()
+    }
 }

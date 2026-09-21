@@ -79,6 +79,7 @@ struct ComposerToolbarViewState: BindableState {
     var isRoomEncrypted: Bool
     var showsEncryptionStatus: Bool
     var isLocationSharingEnabled: Bool
+    var allowsPollCreation: Bool
     
     var keyCommands: [WysiwygKeyCommand] = []
     

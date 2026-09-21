@@ -81,7 +81,7 @@ struct SettingsScreen: View {
                             .font(.compound.headingMD)
                             .foregroundColor(.compound.textPrimary)
                             
-                            Text(context.viewState.userProfile.id)
+                            Text(context.viewState.displayedUserID)
                                 .font(.compound.bodySM)
                                 .foregroundColor(.compound.textSecondary)
                         }
@@ -114,12 +114,14 @@ struct SettingsScreen: View {
                     })
                     .accessibilityIdentifier(A11yIdentifiers.settingsScreen.notifications)
             
-            ListRow(label: .default(title: L10n.commonScreenLock,
-                                    icon: \.lock),
-                    kind: .navigationLink {
-                        context.send(viewAction: .appLock)
-                    })
-                    .accessibilityIdentifier(A11yIdentifiers.settingsScreen.screenLock)
+            if context.viewState.showAppLock {
+                ListRow(label: .default(title: L10n.commonScreenLock,
+                                        icon: \.lock),
+                        kind: .navigationLink {
+                            context.send(viewAction: .appLock)
+                        })
+                        .accessibilityIdentifier(A11yIdentifiers.settingsScreen.screenLock)
+            }
             
             switch context.viewState.securitySectionMode {
             case .secureBackup:
@@ -166,12 +168,14 @@ struct SettingsScreen: View {
     
     private var generalSection: some View {
         Section {
-            ListRow(label: .default(title: L10n.commonAdvancedSettings,
-                                    icon: \.settings),
-                    kind: .navigationLink {
-                        context.send(viewAction: .advancedSettings)
-                    })
-                    .accessibilityIdentifier(A11yIdentifiers.settingsScreen.advancedSettings)
+            if !context.viewState.isManagedFamilyMode {
+                ListRow(label: .default(title: L10n.commonAdvancedSettings,
+                                        icon: \.settings),
+                        kind: .navigationLink {
+                            context.send(viewAction: .advancedSettings)
+                        })
+                        .accessibilityIdentifier(A11yIdentifiers.settingsScreen.advancedSettings)
+            }
             
             if !context.viewState.isManagedFamilyMode {
                 ListRow(label: .default(title: L10n.screenAdvancedSettingsLabs,

@@ -898,10 +898,16 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     
     private func buildTimelineViews(timelineItems: [RoomTimelineItemProtocol], isSwitchingTimelines: Bool = false) {
         var timelineItemsDictionary = OrderedDictionary<TimelineItemIdentifier.UniqueID, RoomTimelineItemViewState>()
-        let displayedTimelineItems = if appSettings.managedFamilyConfiguration != nil {
-            timelineItems.filter { !($0 is StateRoomTimelineItem) && !($0 is TimelineStartRoomTimelineItem) }
-        } else {
-            timelineItems
+        var displayedTimelineItems = timelineItems
+        if appSettings.managedFamilyConfiguration != nil {
+            displayedTimelineItems.removeAll {
+                $0 is StateRoomTimelineItem || $0 is CollapsibleTimelineItem || $0 is TimelineStartRoomTimelineItem
+            }
+            displayedTimelineItems = displayedTimelineItems.enumerated().compactMap { index, item in
+                guard item is SeparatorRoomTimelineItem else { return item }
+                let itemsUntilNextSeparator = displayedTimelineItems.dropFirst(index + 1).prefix { !($0 is SeparatorRoomTimelineItem) }
+                return itemsUntilNextSeparator.contains { $0 is EventBasedTimelineItemProtocol } ? item : nil
+            }
         }
         
         displayedTimelineItems.filter { $0 is RedactedRoomTimelineItem }.forEach { timelineItem in

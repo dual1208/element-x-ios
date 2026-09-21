@@ -22,7 +22,7 @@ class SettingsScreenViewModel: SettingsScreenViewModelType, SettingsScreenViewMo
         actionsSubject.eraseToAnyPublisher()
     }
     
-    init(userSession: UserSessionProtocol, appSettings: AppSettings, isBugReportServiceEnabled: Bool, isInSecondaryWindow: Bool, userIndicatorController: UserIndicatorControllerProtocol) {
+    init(userSession: UserSessionProtocol, appSettings: AppSettings, appLockIsEnabled: Bool = false, isBugReportServiceEnabled: Bool, isInSecondaryWindow: Bool, userIndicatorController: UserIndicatorControllerProtocol) {
         self.appSettings = appSettings
         clientProxy = userSession.clientProxy
         self.userIndicatorController = userIndicatorController
@@ -33,6 +33,7 @@ class SettingsScreenViewModel: SettingsScreenViewModelType, SettingsScreenViewMo
                                            showAccountDeactivation: appSettings.managedFamilyConfiguration == nil && userSession.clientProxy.canDeactivateAccount,
                                            showDeveloperOptions: appSettings.managedFamilyConfiguration == nil && appSettings.developerOptionsEnabled,
                                            isManagedFamilyMode: appSettings.managedFamilyConfiguration != nil,
+                                           showAppLock: appSettings.managedFamilyConfiguration == nil || appLockIsEnabled,
                                            showAnalyticsSettings: appSettings.canPromptForAnalytics,
                                            isBugReportServiceEnabled: isBugReportServiceEnabled,
                                            navigationBarVisibility: isInSecondaryWindow ? .hidden : .automatic),
@@ -127,6 +128,7 @@ class SettingsScreenViewModel: SettingsScreenViewModelType, SettingsScreenViewMo
         case .analytics:
             actionsSubject.send(.analytics)
         case .appLock:
+            guard state.showAppLock else { return }
             actionsSubject.send(.appLock)
         case .reportBug:
             actionsSubject.send(.reportBug)
@@ -142,6 +144,7 @@ class SettingsScreenViewModel: SettingsScreenViewModelType, SettingsScreenViewMo
         case .notifications:
             actionsSubject.send(.notifications)
         case .advancedSettings:
+            guard !state.isManagedFamilyMode else { return }
             actionsSubject.send(.advancedSettings)
         case .labs:
             actionsSubject.send(.labs)

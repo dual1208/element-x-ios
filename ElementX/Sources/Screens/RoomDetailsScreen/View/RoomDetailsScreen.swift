@@ -162,18 +162,22 @@ struct RoomDetailsScreen: View {
                         context.send(viewAction: .processTapMediaEvents)
                     })
             
-            ListRow(label: .default(title: L10n.screenRoomDetailsPinnedEventsRowTitle, icon: \.pin),
-                    details: context.viewState.pinnedEventsActionState.isLoading ? .isWaiting(true) : .title(context.viewState.pinnedEventsActionState.count),
-                    kind: context.viewState.pinnedEventsActionState.isLoading ? .label : .navigationLink {
-                        context.send(viewAction: .processTapPinnedEvents)
-                    })
-                    .disabled(context.viewState.pinnedEventsActionState.isLoading)
+            if context.viewState.showsPinnedEvents {
+                ListRow(label: .default(title: L10n.screenRoomDetailsPinnedEventsRowTitle, icon: \.pin),
+                        details: context.viewState.pinnedEventsActionState.isLoading ? .isWaiting(true) : .title(context.viewState.pinnedEventsActionState.count),
+                        kind: context.viewState.pinnedEventsActionState.isLoading ? .label : .navigationLink {
+                            context.send(viewAction: .processTapPinnedEvents)
+                        })
+                        .disabled(context.viewState.pinnedEventsActionState.isLoading)
+            }
             
-            ListRow(label: .default(title: L10n.screenPollsHistoryTitle, icon: \.polls),
-                    kind: .navigationLink {
-                        context.send(viewAction: .processTapPolls)
-                    })
-                    .accessibilityIdentifier(A11yIdentifiers.roomDetailsScreen.pollsHistory)
+            if !context.viewState.isManagedFamilyMode {
+                ListRow(label: .default(title: L10n.screenPollsHistoryTitle, icon: \.polls),
+                        kind: .navigationLink {
+                            context.send(viewAction: .processTapPolls)
+                        })
+                        .accessibilityIdentifier(A11yIdentifiers.roomDetailsScreen.pollsHistory)
+            }
         }
     }
     
@@ -219,12 +223,14 @@ struct RoomDetailsScreen: View {
                     .disabled(context.viewState.notificationSettingsState.isLoading)
                     .accessibilityIdentifier(A11yIdentifiers.roomDetailsScreen.notifications)
             
-            ListRow(label: .default(title: L10n.commonFavourite, icon: \.favourite),
-                    kind: .toggle($context.isFavourite))
-                .accessibilityIdentifier(A11yIdentifiers.roomDetailsScreen.favourite)
-                .onChange(of: context.isFavourite) { _, newValue in
-                    context.send(viewAction: .toggleFavourite(isFavourite: newValue))
-                }
+            if !context.viewState.isManagedFamilyMode {
+                ListRow(label: .default(title: L10n.commonFavourite, icon: \.favourite),
+                        kind: .toggle($context.isFavourite))
+                    .accessibilityIdentifier(A11yIdentifiers.roomDetailsScreen.favourite)
+                    .onChange(of: context.isFavourite) { _, newValue in
+                        context.send(viewAction: .toggleFavourite(isFavourite: newValue))
+                    }
+            }
             
             if context.viewState.canSeeSecurityAndPrivacy {
                 ListRow(label: .default(title: L10n.screenRoomDetailsSecurityAndPrivacyTitle, icon: \.lock),
