@@ -7,6 +7,7 @@
 //
 
 import CryptoKit
+import Foundation
 
 /// A local no-op timing surface retained for upstream call sites.
 class Signposter {
