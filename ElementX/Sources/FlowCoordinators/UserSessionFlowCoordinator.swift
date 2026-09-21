@@ -48,6 +48,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private var isRoutingManagedFamilySession = false
     private var isOnboardingPresented = false
     private var managedFamilyRouteRetryTask: Task<Void, Never>?
+    private var managedFamilyRoomInfoCancellable: AnyCancellable?
     
     enum State: StateType {
         /// The state machine hasn't started.
@@ -83,6 +84,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         self.navigationRootCoordinator = navigationRootCoordinator
         self.appLockService = appLockService
         self.flowParameters = flowParameters
+        if flowParameters.appSettings.managedFamilyConfiguration != nil {
+            flowParameters.appSettings.activateManagedFamilyNotificationSettings(for: flowParameters.userSession.clientProxy.userID)
+        }
         presenceService = PresenceService(clientProxy: flowParameters.userSession.clientProxy,
                                           appSettings: flowParameters.appSettings)
         
@@ -155,20 +159,19 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     func handleAppRoute(_ appRoute: AppRoute, animated: Bool) {
         MXLog.info("Handling app route: \(appRoute)")
         
-        if let configuration = flowParameters.appSettings.managedFamilyConfiguration {
-            guard isAllowedManagedRoute(appRoute, roomID: configuration.roomID) else {
-                MXLog.warning("Ignoring a route outside of the managed Family room.")
-                return
-            }
-            
-            guard !isManagedFamilyContentRoute(appRoute) || isManagedFamilyCryptoReady else {
-                presentManagedFamilyCryptoRepairIfNeeded()
-                return
-            }
-            
+        if flowParameters.appSettings.managedFamilyConfiguration != nil {
+            if case .settings = appRoute {
+                // Settings remains the recovery path when assignment or sync is unavailable.
+            } else
             if case .roomList = appRoute {
-                handleAppRoute(.room(roomID: configuration.roomID, via: []), animated: animated)
+                routeManagedFamilySessionIfReady()
                 return
+            } else {
+                guard let roomID = userSession.clientProxy.managedFamilyRoomIDPublisher.value,
+                      isAllowedManagedRoute(appRoute, roomID: roomID) else {
+                    MXLog.warning("Ignoring a route outside of the managed Family room.")
+                    return
+                }
             }
         }
         
@@ -238,7 +241,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             if flowParameters.appSettings.managedFamilyConfiguration == nil {
                 spacesTabFlowCoordinator.start()
             }
-            attemptStartingOnboarding()
+            if flowParameters.appSettings.managedFamilyConfiguration == nil {
+                attemptStartingOnboarding()
+            }
             routeManagedFamilySessionIfReady()
         }
         
@@ -266,14 +271,11 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 case .showSettings:
                     handleAppRoute(.settings, animated: true)
                 case .showChatBackupSettings:
+                    guard flowParameters.appSettings.managedFamilyConfiguration == nil else { return }
                     handleAppRoute(.chatBackupSettings, animated: true)
                 case .sessionVerification(let flow):
                     presentSessionVerificationScreen(flow: flow)
                 case .showCallScreen(let roomProxy, let isVoiceCall):
-                    guard flowParameters.appSettings.managedFamilyConfiguration == nil || isManagedFamilyCryptoReady else {
-                        presentManagedFamilyCryptoRepairIfNeeded()
-                        return
-                    }
                     presentCallScreen(roomProxy: roomProxy, voiceOnly: isVoiceCall)
                 case .hideCallScreenOverlay:
                     hideCallScreenOverlay()
@@ -297,18 +299,19 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             }
             .store(in: &cancellables)
         
-        userSession.sessionSecurityStatePublisher
-            .map(\.verificationState)
-            .filter { $0 != .unknown }
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                guard let self else { return }
-                
-                attemptStartingOnboarding()
-                setupSessionVerificationRequestsObserver()
-                routeManagedFamilySessionIfReady()
-            }
-            .store(in: &cancellables)
+        if flowParameters.appSettings.managedFamilyConfiguration == nil {
+            userSession.sessionSecurityStatePublisher
+                .map(\.verificationState)
+                .filter { $0 != .unknown }
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in
+                    guard let self else { return }
+                    
+                    attemptStartingOnboarding()
+                    setupSessionVerificationRequestsObserver()
+                }
+                .store(in: &cancellables)
+        }
         
         let reachabilityNotificationID = "io.element.elementx.reachability.notification"
         userSession.clientProxy.homeserverReachabilityPublisher.removeDuplicates()
@@ -336,6 +339,22 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             .store(in: &cancellables)
         
         userSession.clientProxy.staticRoomSummaryProvider.roomListPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.routeManagedFamilySessionIfReady()
+            }
+            .store(in: &cancellables)
+        
+        userSession.clientProxy.actionsPublisher
+            .filter(\.isSyncUpdate)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.routeManagedFamilySessionIfReady()
+            }
+            .store(in: &cancellables)
+        
+        userSession.clientProxy.managedFamilyRoomIDPublisher
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.routeManagedFamilySessionIfReady()
@@ -394,7 +413,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     
     private func isAllowedManagedRoute(_ route: AppRoute, roomID: String) -> Bool {
         switch route {
-        case .roomList, .settings, .chatBackupSettings, .roomMemberDetails:
+        case .roomList, .settings, .roomMemberDetails:
             true
         case .room(let routeRoomID, _), .roomDetails(let routeRoomID), .call(let routeRoomID, _),
              .event(_, let routeRoomID, _), .childEvent(_, let routeRoomID, _),
@@ -403,38 +422,15 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         case .share(let payload):
             payload.roomID == nil || payload.roomID == roomID
         case .accountProvisioningLink, .oAuthCallback, .roomAlias, .childRoom, .childRoomAlias,
-             .eventOnRoomAlias, .childEventOnRoomAlias, .userProfile, .search:
+             .eventOnRoomAlias, .childEventOnRoomAlias, .userProfile, .chatBackupSettings, .search:
             false
         }
     }
     
-    private func isManagedFamilyContentRoute(_ route: AppRoute) -> Bool {
-        switch route {
-        case .settings, .chatBackupSettings, .accountProvisioningLink, .oAuthCallback:
-            false
-        default:
-            true
-        }
-    }
-    
-    private var isManagedFamilyCryptoReady: Bool {
-        let state = userSession.sessionSecurityStatePublisher.value
-        return state.verificationState == .verified && state.recoveryState == .enabled
-    }
-    
-    private func presentManagedFamilyCryptoRepairIfNeeded() {
-        let state = userSession.sessionSecurityStatePublisher.value
-        guard state.verificationState == .verified,
-              state.recoveryState == .disabled || state.recoveryState == .incomplete,
-              stateMachine.state == .tabBar else { return }
-        handleAppRoute(.chatBackupSettings, animated: true)
-    }
-    
-    /// Continue through the SDK's real verification and recovery state before opening the Family room.
-    /// Existing sessions for another homeserver remain untouched and fall back to the repair/settings UI.
+    /// Opens only the room assigned to the current account by synced account data.
     private func routeManagedFamilySessionIfReady() {
         guard let configuration = flowParameters.appSettings.managedFamilyConfiguration,
-              !onboardingFlowCoordinator.shouldStart,
+              stateMachine.state == .tabBar,
               !isOnboardingPresented,
               !isRoutingManagedFamilySession else { return }
         
@@ -443,41 +439,52 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             return
         }
         
-        let securityState = userSession.sessionSecurityStatePublisher.value
-        guard securityState.verificationState == .verified else { return }
-        
-        switch securityState.recoveryState {
-        case .disabled, .incomplete:
-            guard stateMachine.state == .tabBar else { return }
-            handleAppRoute(.chatBackupSettings, animated: true)
-        case .enabled:
-            guard !isDisplayingRoomScreen(withRoomID: configuration.roomID) else { return }
+        isRoutingManagedFamilySession = true
+        Task { [weak self] in
+            guard let self else { return }
+            defer { isRoutingManagedFamilySession = false }
+            
+            guard case let .success(roomID?) = await userSession.clientProxy
+                .loadManagedFamilyRoomAssignment(eventType: configuration.assignedRoomEventType) else {
+                scheduleManagedFamilyRouteRetry()
+                return
+            }
+            
+            guard !isDisplayingRoomScreen(withRoomID: roomID) else { return }
             managedFamilyRouteRetryTask?.cancel()
             managedFamilyRouteRetryTask = nil
-            isRoutingManagedFamilySession = true
-            Task { [weak self] in
-                guard let self else { return }
-                defer { isRoutingManagedFamilySession = false }
-                
-                switch await userSession.clientProxy.roomForIdentifier(configuration.roomID) {
-                case .joined:
-                    handleAppRoute(.room(roomID: configuration.roomID, via: []), animated: true)
-                case .invited:
-                    guard case .success = await userSession.clientProxy.joinRoom(configuration.roomID, via: []) else {
-                        MXLog.error("Failed to accept the managed Family room invitation.")
-                        scheduleManagedFamilyRouteRetry()
-                        return
-                    }
-                    handleAppRoute(.room(roomID: configuration.roomID, via: []), animated: true)
-                case nil:
-                    MXLog.info("The managed Family room is not in the initial room list yet; retrying.")
-                    scheduleManagedFamilyRouteRetry()
-                case .knocked, .banned, .left:
-                    MXLog.error("The managed Family room is unavailable; administrator repair is required.")
+            
+            switch await userSession.clientProxy.roomForIdentifier(roomID) {
+            case .joined(let roomProxy):
+                guard !roomProxy.infoPublisher.value.isEncrypted else {
+                    MXLog.error("The assigned room is encrypted; managed no-E2EE mode refuses to open it.")
+                    return
                 }
+                userSession.clientProxy.confirmManagedFamilyRoomAssignment(roomID)
+                await synchronizeManagedFamilyNotificationSettings()
+                managedFamilyRoomInfoCancellable = roomProxy.infoPublisher
+                    .map(\.isEncrypted)
+                    .removeDuplicates()
+                    .filter { $0 }
+                    .sink { [weak self] _ in
+                        guard let self else { return }
+                        userSession.clientProxy.confirmManagedFamilyRoomAssignment(nil)
+                        clearRoute(animated: true)
+                    }
+                guard stateMachine.state == .tabBar, !isOnboardingPresented else { return }
+                handleAppRoute(.room(roomID: roomID, via: []), animated: true)
+            case .invited:
+                guard case .success = await userSession.clientProxy.joinRoom(roomID, via: []) else {
+                    MXLog.error("Failed to accept the assigned room invitation.")
+                    scheduleManagedFamilyRouteRetry()
+                    return
+                }
+                scheduleManagedFamilyRouteRetry()
+            case nil:
+                scheduleManagedFamilyRouteRetry()
+            case .knocked, .banned, .left:
+                MXLog.error("The assigned room is unavailable; administrator repair is required.")
             }
-        case .settingUp, .unknown:
-            break
         }
     }
     
@@ -491,6 +498,20 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         }
     }
     
+    private func synchronizeManagedFamilyNotificationSettings() async {
+        if let messagesEnabled = try? await userSession.clientProxy.notificationSettings.managedFamilyMessageNotificationsEnabled() {
+            flowParameters.appSettings.managedFamilyMessageNotificationsEnabled = messagesEnabled
+        }
+        
+        var managedCallsEnabled = try? await userSession.clientProxy.notificationSettings.managedFamilyCallNotificationsEnabled()
+        if managedCallsEnabled == nil {
+            managedCallsEnabled = try? await userSession.clientProxy.notificationSettings.isCallEnabled()
+        }
+        if let callsEnabled = managedCallsEnabled {
+            flowParameters.appSettings.managedFamilyCallNotificationsEnabled = callsEnabled
+        }
+    }
+    
     private func isManagedFamilySessionCompatible(with configuration: ManagedFamilyConfiguration) -> Bool {
         let homeserver = userSession.clientProxy.homeserver
         return homeserver == configuration.accountProvider || URL(string: homeserver)?.host == configuration.accountProvider
@@ -499,10 +520,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private func attemptStartingOnboarding() {
         MXLog.info("Attempting to start onboarding")
         
-        if let configuration = flowParameters.appSettings.managedFamilyConfiguration,
-           !isManagedFamilySessionCompatible(with: configuration) {
-            return
-        }
+        guard flowParameters.appSettings.managedFamilyConfiguration == nil else { return }
         
         if onboardingFlowCoordinator.shouldStart {
             clearRoute(animated: false)
@@ -687,6 +705,17 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     // MARK: - Logout
     
     private func runLogoutFlow() async {
+        if flowParameters.appSettings.managedFamilyConfiguration != nil {
+            navigationRootCoordinator.alertInfo = .init(id: .init(),
+                                                        title: L10n.screenSignoutConfirmationDialogTitle,
+                                                        message: L10n.screenSignoutConfirmationDialogContent,
+                                                        primaryButton: .init(title: L10n.screenSignoutConfirmationDialogSubmit,
+                                                                             role: .destructive) { [weak self] in
+                                                            self?.actionsSubject.send(.logout)
+                                                        })
+            return
+        }
+        
         let secureBackupController = userSession.clientProxy.secureBackupController
         
         guard case let .success(isLastDevice) = await userSession.clientProxy.isOnlyDeviceLeft() else {

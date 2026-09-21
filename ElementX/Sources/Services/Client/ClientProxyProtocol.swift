@@ -116,6 +116,9 @@ protocol ClientProxyProtocol: AnyObject {
     
     var homeserverReachabilityPublisher: CurrentValuePublisher<HomeserverReachability, Never> { get }
     
+    /// The single room assigned to this account by the managed deployment.
+    var managedFamilyRoomIDPublisher: CurrentValuePublisher<String?, Never> { get }
+    
     var userID: String { get }
     
     var deviceID: String? { get }
@@ -183,6 +186,9 @@ protocol ClientProxyProtocol: AnyObject {
     func expireSyncSessions() async
     
     func accountURL(action: AccountManagementAction) async -> URL?
+    
+    func loadManagedFamilyRoomAssignment(eventType: String) async -> Result<String?, ClientProxyError>
+    func confirmManagedFamilyRoomAssignment(_ roomID: String?)
     
     func directRoomForUserID(_ userID: String) -> Result<String?, ClientProxyError>
     

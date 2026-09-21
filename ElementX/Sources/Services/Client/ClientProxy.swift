@@ -14,6 +14,14 @@ import OrderedCollections
 
 // swiftlint:disable:next type_body_length
 class ClientProxy: ClientProxyProtocol {
+    private struct ManagedFamilyRoomAssignment: Decodable {
+        let roomID: String
+        
+        enum CodingKeys: String, CodingKey {
+            case roomID = "room_id"
+        }
+    }
+    
     private let client: ClientProtocol
     private let networkMonitor: NetworkMonitorProtocol
     private let appSettings: AppSettings
@@ -177,6 +185,11 @@ class ClientProxy: ClientProxyProtocol {
     private let verificationStateSubject = CurrentValueSubject<SessionVerificationState, Never>(.unknown)
     var verificationStatePublisher: CurrentValuePublisher<SessionVerificationState, Never> {
         verificationStateSubject.asCurrentValuePublisher()
+    }
+    
+    private let managedFamilyRoomIDSubject = CurrentValueSubject<String?, Never>(nil)
+    var managedFamilyRoomIDPublisher: CurrentValuePublisher<String?, Never> {
+        managedFamilyRoomIDSubject.asCurrentValuePublisher()
     }
     
     private let homeserverReachabilitySubject = CurrentValueSubject<HomeserverReachability, Never>(.reachable)
@@ -470,6 +483,33 @@ class ClientProxy: ClientProxyProtocol {
     
     func accountURL(action: AccountManagementAction) async -> URL? {
         try? await client.accountUrl(action: action).flatMap(URL.init(string:))
+    }
+    
+    func loadManagedFamilyRoomAssignment(eventType: String) async -> Result<String?, ClientProxyError> {
+        do {
+            guard let content = try await client.accountData(eventType: eventType) else {
+                managedFamilyRoomIDSubject.send(nil)
+                return .success(nil)
+            }
+            
+            let assignment = try JSONDecoder().decode(ManagedFamilyRoomAssignment.self, from: Data(content.utf8))
+            guard assignment.roomID.hasPrefix("!"), !assignment.roomID.dropFirst().isEmpty else {
+                managedFamilyRoomIDSubject.send(nil)
+                return .success(nil)
+            }
+            
+            if managedFamilyRoomIDSubject.value != assignment.roomID {
+                managedFamilyRoomIDSubject.send(nil)
+            }
+            return .success(assignment.roomID)
+        } catch {
+            managedFamilyRoomIDSubject.send(nil)
+            return .failure(.sdkError(error))
+        }
+    }
+    
+    func confirmManagedFamilyRoomAssignment(_ roomID: String?) {
+        managedFamilyRoomIDSubject.send(roomID)
     }
     
     func directRoomForUserID(_ userID: String) -> Result<String?, ClientProxyError> {

@@ -72,13 +72,15 @@ final class ElementCallWidgetDriver: WidgetCapabilitiesProvider, ElementCallWidg
                clientID: String,
                colorScheme: ColorScheme,
                voiceOnly: Bool,
+               languageTag: String,
+               allowMediaEncryption: Bool,
                rageshakeURL: String?,
                analyticsConfiguration: ElementCallAnalyticsConfiguration?) async -> Result<URL, ElementCallWidgetDriverError> {
         guard let room = room as? Room else {
             return .failure(.roomInvalid)
         }
         
-        async let useEncryption = (try? room.latestEncryptionState() == .encrypted) ?? false
+        async let useEncryption = allowMediaEncryption && ((try? room.latestEncryptionState() == .encrypted) ?? false)
         async let intent = room.joinCallIntent(voiceOnly: voiceOnly)
         
         let widgetSettings: WidgetSettings
@@ -102,7 +104,6 @@ final class ElementCallWidgetDriver: WidgetCapabilitiesProvider, ElementCallWidg
             return .failure(.failedBuildingWidgetSettings)
         }
         
-        let languageTag = "\(Locale.current.language.languageCode ?? "en")-\(Locale.current.language.region ?? "US")"
         let theme = "dark"
         
         let urlString: String

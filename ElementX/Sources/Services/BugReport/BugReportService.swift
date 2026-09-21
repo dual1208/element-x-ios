@@ -9,7 +9,6 @@
 import Combine
 import Foundation
 import GZIP
-import Sentry
 import UIKit
 
 class BugReportService: NSObject, BugReportServiceProtocol {

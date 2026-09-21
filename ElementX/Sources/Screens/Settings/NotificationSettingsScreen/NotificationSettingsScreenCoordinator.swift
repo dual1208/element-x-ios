@@ -43,6 +43,7 @@ final class NotificationSettingsScreenCoordinator: CoordinatorProtocol {
                                                         userNotificationCenter: parameters.userNotificationCenter,
                                                         notificationToneManager: NotificationToneManager(appSettings: parameters.appSettings),
                                                         notificationSettingsProxy: parameters.userSession.clientProxy.notificationSettings,
+                                                        managedFamilyRoomID: parameters.userSession.clientProxy.managedFamilyRoomIDPublisher.value,
                                                         userIndicatorController: parameters.userIndicatorController,
                                                         isModallyPresented: parameters.isModallyPresented)
     }

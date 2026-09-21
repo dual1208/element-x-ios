@@ -1,6 +1,6 @@
 settings:
-  APP_DISPLAY_NAME: Element X tcno
-  PRODUCTION_APP_NAME: Element X tcno
+  APP_DISPLAY_NAME: 家庭聊天
+  PRODUCTION_APP_NAME: 家庭聊天
   APP_GROUP_IDENTIFIER: group.com.dual1208.elementx
   BASE_BUNDLE_IDENTIFIER: com.dual1208.elementx
   ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: "colors/accent-color"

@@ -10,15 +10,19 @@ import Foundation
 // swiftlint:disable explicit_type_interface function_parameter_count identifier_name line_length
 // swiftlint:disable nesting type_body_length type_name vertical_whitespace_opening_braces
 internal nonisolated enum ManagedFamilyL10n {
+  /// Incoming call alerts
+  internal static var managedFamilyCallNotifications: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_call_notifications") }
+  /// Message alerts
+  internal static var managedFamilyMessageNotifications: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_message_notifications") }
   /// Continue
   internal static var managedFamilyOnboardingContinue: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_onboarding_continue") }
-  /// Sign in with the account your family gave you. For first-time setup, ask the family member who installed the app to help.
+  /// Sign in with the account your family gave you. Your family group opens automatically.
   internal static var managedFamilyOnboardingMessage: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_onboarding_message") }
   /// Family chat
   internal static var managedFamilyOnboardingTitle: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_onboarding_title") }
-  /// Family chat needs help
+  /// Connecting to the family group
   internal static var managedFamilySetupNeedsHelp: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_setup_needs_help") }
-  /// Open Settings to finish account setup, or ask the family member who installed the app to help.
+  /// If it does not open, check the account in Settings or ask the family member who installed the app.
   internal static var managedFamilySetupNeedsHelpMessage: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_setup_needs_help_message") }
 }
 // swiftlint:enable explicit_type_interface function_parameter_count identifier_name line_length

@@ -2284,6 +2284,11 @@ nonisolated class ClientProxyMock: ClientProxyProtocol, @unchecked Sendable {
         set(value) { underlyingHomeserverReachabilityPublisher = value }
     }
     nonisolated(unsafe) var underlyingHomeserverReachabilityPublisher: CurrentValuePublisher<HomeserverReachability, Never>!
+    var managedFamilyRoomIDPublisher: CurrentValuePublisher<String?, Never> {
+        get { return underlyingManagedFamilyRoomIDPublisher }
+        set(value) { underlyingManagedFamilyRoomIDPublisher = value }
+    }
+    nonisolated(unsafe) var underlyingManagedFamilyRoomIDPublisher: CurrentValuePublisher<String?, Never>!
     var userID: String {
         get { return underlyingUserID }
         set(value) { underlyingUserID = value }
@@ -2596,6 +2601,79 @@ nonisolated class ClientProxyMock: ClientProxyProtocol, @unchecked Sendable {
         } else {
             return accountURLActionReturnValue
         }
+    }
+    //MARK: - loadManagedFamilyRoomAssignment
+
+    private let loadManagedFamilyRoomAssignmentEventTypeCallsCountLock = NSLock()
+    private nonisolated(unsafe) var loadManagedFamilyRoomAssignmentEventTypeUnderlyingCallsCount = 0
+    var loadManagedFamilyRoomAssignmentEventTypeCallsCount: Int {
+        get { loadManagedFamilyRoomAssignmentEventTypeCallsCountLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingCallsCount } }
+        set { loadManagedFamilyRoomAssignmentEventTypeCallsCountLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingCallsCount = newValue } }
+    }
+    var loadManagedFamilyRoomAssignmentEventTypeCalled: Bool {
+        return loadManagedFamilyRoomAssignmentEventTypeCallsCount > 0
+    }
+    private let loadManagedFamilyRoomAssignmentEventTypeReceivedEventTypeLock = NSLock()
+    private nonisolated(unsafe) var loadManagedFamilyRoomAssignmentEventTypeUnderlyingReceivedEventType: String?
+    var loadManagedFamilyRoomAssignmentEventTypeReceivedEventType: String? {
+        get { loadManagedFamilyRoomAssignmentEventTypeReceivedEventTypeLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingReceivedEventType } }
+        set { loadManagedFamilyRoomAssignmentEventTypeReceivedEventTypeLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingReceivedEventType = newValue } }
+    }
+    private let loadManagedFamilyRoomAssignmentEventTypeReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var loadManagedFamilyRoomAssignmentEventTypeUnderlyingReceivedInvocations: [String] = []
+    var loadManagedFamilyRoomAssignmentEventTypeReceivedInvocations: [String] {
+        get { loadManagedFamilyRoomAssignmentEventTypeReceivedInvocationsLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingReceivedInvocations } }
+        set { loadManagedFamilyRoomAssignmentEventTypeReceivedInvocationsLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingReceivedInvocations = newValue } }
+    }
+
+    private let loadManagedFamilyRoomAssignmentEventTypeReturnValueLock = NSLock()
+    private nonisolated(unsafe) var loadManagedFamilyRoomAssignmentEventTypeUnderlyingReturnValue: Result<String?, ClientProxyError>!
+    var loadManagedFamilyRoomAssignmentEventTypeReturnValue: Result<String?, ClientProxyError>! {
+        get { loadManagedFamilyRoomAssignmentEventTypeReturnValueLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingReturnValue } }
+        set { loadManagedFamilyRoomAssignmentEventTypeReturnValueLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var loadManagedFamilyRoomAssignmentEventTypeClosure: ((String) async -> Result<String?, ClientProxyError>)?
+
+    @concurrent func loadManagedFamilyRoomAssignment(eventType: String) async -> Result<String?, ClientProxyError> {
+        loadManagedFamilyRoomAssignmentEventTypeCallsCountLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingCallsCount += 1 }
+        loadManagedFamilyRoomAssignmentEventTypeReceivedEventType = eventType
+        loadManagedFamilyRoomAssignmentEventTypeReceivedInvocationsLock.withLock { loadManagedFamilyRoomAssignmentEventTypeUnderlyingReceivedInvocations.append(eventType) }
+        if let loadManagedFamilyRoomAssignmentEventTypeClosure = loadManagedFamilyRoomAssignmentEventTypeClosure {
+            return await loadManagedFamilyRoomAssignmentEventTypeClosure(eventType)
+        } else {
+            return loadManagedFamilyRoomAssignmentEventTypeReturnValue
+        }
+    }
+    //MARK: - confirmManagedFamilyRoomAssignment
+
+    private let confirmManagedFamilyRoomAssignmentCallsCountLock = NSLock()
+    private nonisolated(unsafe) var confirmManagedFamilyRoomAssignmentUnderlyingCallsCount = 0
+    var confirmManagedFamilyRoomAssignmentCallsCount: Int {
+        get { confirmManagedFamilyRoomAssignmentCallsCountLock.withLock { confirmManagedFamilyRoomAssignmentUnderlyingCallsCount } }
+        set { confirmManagedFamilyRoomAssignmentCallsCountLock.withLock { confirmManagedFamilyRoomAssignmentUnderlyingCallsCount = newValue } }
+    }
+    var confirmManagedFamilyRoomAssignmentCalled: Bool {
+        return confirmManagedFamilyRoomAssignmentCallsCount > 0
+    }
+    private let confirmManagedFamilyRoomAssignmentReceivedRoomIDLock = NSLock()
+    private nonisolated(unsafe) var confirmManagedFamilyRoomAssignmentUnderlyingReceivedRoomID: String?
+    var confirmManagedFamilyRoomAssignmentReceivedRoomID: String? {
+        get { confirmManagedFamilyRoomAssignmentReceivedRoomIDLock.withLock { confirmManagedFamilyRoomAssignmentUnderlyingReceivedRoomID } }
+        set { confirmManagedFamilyRoomAssignmentReceivedRoomIDLock.withLock { confirmManagedFamilyRoomAssignmentUnderlyingReceivedRoomID = newValue } }
+    }
+    private let confirmManagedFamilyRoomAssignmentReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var confirmManagedFamilyRoomAssignmentUnderlyingReceivedInvocations: [String?] = []
+    var confirmManagedFamilyRoomAssignmentReceivedInvocations: [String?] {
+        get { confirmManagedFamilyRoomAssignmentReceivedInvocationsLock.withLock { confirmManagedFamilyRoomAssignmentUnderlyingReceivedInvocations } }
+        set { confirmManagedFamilyRoomAssignmentReceivedInvocationsLock.withLock { confirmManagedFamilyRoomAssignmentUnderlyingReceivedInvocations = newValue } }
+    }
+    nonisolated(unsafe) var confirmManagedFamilyRoomAssignmentClosure: ((String?) -> Void)?
+
+    func confirmManagedFamilyRoomAssignment(_ roomID: String?) {
+        confirmManagedFamilyRoomAssignmentCallsCountLock.withLock { confirmManagedFamilyRoomAssignmentUnderlyingCallsCount += 1 }
+        confirmManagedFamilyRoomAssignmentReceivedRoomID = roomID
+        confirmManagedFamilyRoomAssignmentReceivedInvocationsLock.withLock { confirmManagedFamilyRoomAssignmentUnderlyingReceivedInvocations.append(roomID) }
+        confirmManagedFamilyRoomAssignmentClosure?(roomID)
     }
     //MARK: - directRoomForUserID
 
@@ -4968,44 +5046,44 @@ nonisolated class ElementCallWidgetDriverMock: ElementCallWidgetDriverProtocol, 
 
     //MARK: - start
 
-    private let startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationCallsCountLock = NSLock()
-    private nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingCallsCount = 0
-    var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationCallsCount: Int {
-        get { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationCallsCountLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingCallsCount } }
-        set { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationCallsCountLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingCallsCount = newValue } }
+    private let startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationCallsCountLock = NSLock()
+    private nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingCallsCount = 0
+    var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationCallsCount: Int {
+        get { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationCallsCountLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingCallsCount } }
+        set { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationCallsCountLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingCallsCount = newValue } }
     }
-    var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationCalled: Bool {
-        return startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationCallsCount > 0
+    var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationCalled: Bool {
+        return startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationCallsCount > 0
     }
-    private let startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedArgumentsLock = NSLock()
-    private nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReceivedArguments: (baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?)?
-    var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedArguments: (baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?)? {
-        get { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedArgumentsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReceivedArguments } }
-        set { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedArgumentsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReceivedArguments = newValue } }
+    private let startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedArgumentsLock = NSLock()
+    private nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReceivedArguments: (baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, languageTag: String, allowMediaEncryption: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?)?
+    var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedArguments: (baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, languageTag: String, allowMediaEncryption: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?)? {
+        get { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedArgumentsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReceivedArguments } }
+        set { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedArgumentsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReceivedArguments = newValue } }
     }
-    private let startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedInvocationsLock = NSLock()
-    private nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReceivedInvocations: [(baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?)] = []
-    var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedInvocations: [(baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?)] {
-        get { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedInvocationsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReceivedInvocations } }
-        set { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedInvocationsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReceivedInvocations = newValue } }
+    private let startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReceivedInvocations: [(baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, languageTag: String, allowMediaEncryption: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?)] = []
+    var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedInvocations: [(baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, languageTag: String, allowMediaEncryption: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?)] {
+        get { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedInvocationsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReceivedInvocations } }
+        set { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedInvocationsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReceivedInvocations = newValue } }
     }
 
-    private let startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReturnValueLock = NSLock()
-    private nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReturnValue: Result<URL, ElementCallWidgetDriverError>!
-    var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReturnValue: Result<URL, ElementCallWidgetDriverError>! {
-        get { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReturnValueLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReturnValue } }
-        set { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReturnValueLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReturnValue = newValue } }
+    private let startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReturnValueLock = NSLock()
+    private nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReturnValue: Result<URL, ElementCallWidgetDriverError>!
+    var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReturnValue: Result<URL, ElementCallWidgetDriverError>! {
+        get { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReturnValueLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReturnValue } }
+        set { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReturnValueLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReturnValue = newValue } }
     }
-    nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationClosure: ((URL, String, ColorScheme, Bool, String?, ElementCallAnalyticsConfiguration?) async -> Result<URL, ElementCallWidgetDriverError>)?
+    nonisolated(unsafe) var startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationClosure: ((URL, String, ColorScheme, Bool, String, Bool, String?, ElementCallAnalyticsConfiguration?) async -> Result<URL, ElementCallWidgetDriverError>)?
 
-    @concurrent func start(baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?) async -> Result<URL, ElementCallWidgetDriverError> {
-        startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationCallsCountLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingCallsCount += 1 }
-        startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedArguments = (baseURL: baseURL, clientID: clientID, colorScheme: colorScheme, voiceOnly: voiceOnly, rageshakeURL: rageshakeURL, analyticsConfiguration: analyticsConfiguration)
-        startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReceivedInvocationsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationUnderlyingReceivedInvocations.append((baseURL: baseURL, clientID: clientID, colorScheme: colorScheme, voiceOnly: voiceOnly, rageshakeURL: rageshakeURL, analyticsConfiguration: analyticsConfiguration)) }
-        if let startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationClosure = startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationClosure {
-            return await startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationClosure(baseURL, clientID, colorScheme, voiceOnly, rageshakeURL, analyticsConfiguration)
+    @concurrent func start(baseURL: URL, clientID: String, colorScheme: ColorScheme, voiceOnly: Bool, languageTag: String, allowMediaEncryption: Bool, rageshakeURL: String?, analyticsConfiguration: ElementCallAnalyticsConfiguration?) async -> Result<URL, ElementCallWidgetDriverError> {
+        startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationCallsCountLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingCallsCount += 1 }
+        startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedArguments = (baseURL: baseURL, clientID: clientID, colorScheme: colorScheme, voiceOnly: voiceOnly, languageTag: languageTag, allowMediaEncryption: allowMediaEncryption, rageshakeURL: rageshakeURL, analyticsConfiguration: analyticsConfiguration)
+        startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReceivedInvocationsLock.withLock { startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationUnderlyingReceivedInvocations.append((baseURL: baseURL, clientID: clientID, colorScheme: colorScheme, voiceOnly: voiceOnly, languageTag: languageTag, allowMediaEncryption: allowMediaEncryption, rageshakeURL: rageshakeURL, analyticsConfiguration: analyticsConfiguration)) }
+        if let startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationClosure = startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationClosure {
+            return await startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationClosure(baseURL, clientID, colorScheme, voiceOnly, languageTag, allowMediaEncryption, rageshakeURL, analyticsConfiguration)
         } else {
-            return startBaseURLClientIDColorSchemeVoiceOnlyRageshakeURLAnalyticsConfigurationReturnValue
+            return startBaseURLClientIDColorSchemeVoiceOnlyLanguageTagAllowMediaEncryptionRageshakeURLAnalyticsConfigurationReturnValue
         }
     }
     //MARK: - handleMessage
@@ -9078,6 +9156,140 @@ nonisolated class NotificationSettingsProxyMock: NotificationSettingsProxyProtoc
         setCallEnabledEnabledReceivedEnabled = enabled
         setCallEnabledEnabledReceivedInvocationsLock.withLock { setCallEnabledEnabledUnderlyingReceivedInvocations.append(enabled) }
         try await setCallEnabledEnabledClosure?(enabled)
+    }
+    //MARK: - setManagedFamilyMessageNotifications
+
+    nonisolated(unsafe) var setManagedFamilyMessageNotificationsRoomIDEnabledThrowableError: Error?
+    private let setManagedFamilyMessageNotificationsRoomIDEnabledCallsCountLock = NSLock()
+    private nonisolated(unsafe) var setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingCallsCount = 0
+    var setManagedFamilyMessageNotificationsRoomIDEnabledCallsCount: Int {
+        get { setManagedFamilyMessageNotificationsRoomIDEnabledCallsCountLock.withLock { setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingCallsCount } }
+        set { setManagedFamilyMessageNotificationsRoomIDEnabledCallsCountLock.withLock { setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingCallsCount = newValue } }
+    }
+    var setManagedFamilyMessageNotificationsRoomIDEnabledCalled: Bool {
+        return setManagedFamilyMessageNotificationsRoomIDEnabledCallsCount > 0
+    }
+    private let setManagedFamilyMessageNotificationsRoomIDEnabledReceivedArgumentsLock = NSLock()
+    private nonisolated(unsafe) var setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingReceivedArguments: (roomID: String, enabled: Bool)?
+    var setManagedFamilyMessageNotificationsRoomIDEnabledReceivedArguments: (roomID: String, enabled: Bool)? {
+        get { setManagedFamilyMessageNotificationsRoomIDEnabledReceivedArgumentsLock.withLock { setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingReceivedArguments } }
+        set { setManagedFamilyMessageNotificationsRoomIDEnabledReceivedArgumentsLock.withLock { setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingReceivedArguments = newValue } }
+    }
+    private let setManagedFamilyMessageNotificationsRoomIDEnabledReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingReceivedInvocations: [(roomID: String, enabled: Bool)] = []
+    var setManagedFamilyMessageNotificationsRoomIDEnabledReceivedInvocations: [(roomID: String, enabled: Bool)] {
+        get { setManagedFamilyMessageNotificationsRoomIDEnabledReceivedInvocationsLock.withLock { setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingReceivedInvocations } }
+        set { setManagedFamilyMessageNotificationsRoomIDEnabledReceivedInvocationsLock.withLock { setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingReceivedInvocations = newValue } }
+    }
+    nonisolated(unsafe) var setManagedFamilyMessageNotificationsRoomIDEnabledClosure: ((String, Bool) async throws -> Void)?
+
+    @concurrent func setManagedFamilyMessageNotifications(roomID: String, enabled: Bool) async throws {
+        if let error = setManagedFamilyMessageNotificationsRoomIDEnabledThrowableError {
+            throw error
+        }
+        setManagedFamilyMessageNotificationsRoomIDEnabledCallsCountLock.withLock { setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingCallsCount += 1 }
+        setManagedFamilyMessageNotificationsRoomIDEnabledReceivedArguments = (roomID: roomID, enabled: enabled)
+        setManagedFamilyMessageNotificationsRoomIDEnabledReceivedInvocationsLock.withLock { setManagedFamilyMessageNotificationsRoomIDEnabledUnderlyingReceivedInvocations.append((roomID: roomID, enabled: enabled)) }
+        try await setManagedFamilyMessageNotificationsRoomIDEnabledClosure?(roomID, enabled)
+    }
+    //MARK: - setManagedFamilyCallNotifications
+
+    nonisolated(unsafe) var setManagedFamilyCallNotificationsRoomIDEnabledThrowableError: Error?
+    private let setManagedFamilyCallNotificationsRoomIDEnabledCallsCountLock = NSLock()
+    private nonisolated(unsafe) var setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingCallsCount = 0
+    var setManagedFamilyCallNotificationsRoomIDEnabledCallsCount: Int {
+        get { setManagedFamilyCallNotificationsRoomIDEnabledCallsCountLock.withLock { setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingCallsCount } }
+        set { setManagedFamilyCallNotificationsRoomIDEnabledCallsCountLock.withLock { setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingCallsCount = newValue } }
+    }
+    var setManagedFamilyCallNotificationsRoomIDEnabledCalled: Bool {
+        return setManagedFamilyCallNotificationsRoomIDEnabledCallsCount > 0
+    }
+    private let setManagedFamilyCallNotificationsRoomIDEnabledReceivedArgumentsLock = NSLock()
+    private nonisolated(unsafe) var setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingReceivedArguments: (roomID: String, enabled: Bool)?
+    var setManagedFamilyCallNotificationsRoomIDEnabledReceivedArguments: (roomID: String, enabled: Bool)? {
+        get { setManagedFamilyCallNotificationsRoomIDEnabledReceivedArgumentsLock.withLock { setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingReceivedArguments } }
+        set { setManagedFamilyCallNotificationsRoomIDEnabledReceivedArgumentsLock.withLock { setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingReceivedArguments = newValue } }
+    }
+    private let setManagedFamilyCallNotificationsRoomIDEnabledReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingReceivedInvocations: [(roomID: String, enabled: Bool)] = []
+    var setManagedFamilyCallNotificationsRoomIDEnabledReceivedInvocations: [(roomID: String, enabled: Bool)] {
+        get { setManagedFamilyCallNotificationsRoomIDEnabledReceivedInvocationsLock.withLock { setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingReceivedInvocations } }
+        set { setManagedFamilyCallNotificationsRoomIDEnabledReceivedInvocationsLock.withLock { setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingReceivedInvocations = newValue } }
+    }
+    nonisolated(unsafe) var setManagedFamilyCallNotificationsRoomIDEnabledClosure: ((String, Bool) async throws -> Void)?
+
+    @concurrent func setManagedFamilyCallNotifications(roomID: String, enabled: Bool) async throws {
+        if let error = setManagedFamilyCallNotificationsRoomIDEnabledThrowableError {
+            throw error
+        }
+        setManagedFamilyCallNotificationsRoomIDEnabledCallsCountLock.withLock { setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingCallsCount += 1 }
+        setManagedFamilyCallNotificationsRoomIDEnabledReceivedArguments = (roomID: roomID, enabled: enabled)
+        setManagedFamilyCallNotificationsRoomIDEnabledReceivedInvocationsLock.withLock { setManagedFamilyCallNotificationsRoomIDEnabledUnderlyingReceivedInvocations.append((roomID: roomID, enabled: enabled)) }
+        try await setManagedFamilyCallNotificationsRoomIDEnabledClosure?(roomID, enabled)
+    }
+    //MARK: - managedFamilyMessageNotificationsEnabled
+
+    nonisolated(unsafe) var managedFamilyMessageNotificationsEnabledThrowableError: Error?
+    private let managedFamilyMessageNotificationsEnabledCallsCountLock = NSLock()
+    private nonisolated(unsafe) var managedFamilyMessageNotificationsEnabledUnderlyingCallsCount = 0
+    var managedFamilyMessageNotificationsEnabledCallsCount: Int {
+        get { managedFamilyMessageNotificationsEnabledCallsCountLock.withLock { managedFamilyMessageNotificationsEnabledUnderlyingCallsCount } }
+        set { managedFamilyMessageNotificationsEnabledCallsCountLock.withLock { managedFamilyMessageNotificationsEnabledUnderlyingCallsCount = newValue } }
+    }
+    var managedFamilyMessageNotificationsEnabledCalled: Bool {
+        return managedFamilyMessageNotificationsEnabledCallsCount > 0
+    }
+
+    private let managedFamilyMessageNotificationsEnabledReturnValueLock = NSLock()
+    private nonisolated(unsafe) var managedFamilyMessageNotificationsEnabledUnderlyingReturnValue: Bool?
+    var managedFamilyMessageNotificationsEnabledReturnValue: Bool? {
+        get { managedFamilyMessageNotificationsEnabledReturnValueLock.withLock { managedFamilyMessageNotificationsEnabledUnderlyingReturnValue } }
+        set { managedFamilyMessageNotificationsEnabledReturnValueLock.withLock { managedFamilyMessageNotificationsEnabledUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var managedFamilyMessageNotificationsEnabledClosure: (() async throws -> Bool?)?
+
+    @concurrent func managedFamilyMessageNotificationsEnabled() async throws -> Bool? {
+        if let error = managedFamilyMessageNotificationsEnabledThrowableError {
+            throw error
+        }
+        managedFamilyMessageNotificationsEnabledCallsCountLock.withLock { managedFamilyMessageNotificationsEnabledUnderlyingCallsCount += 1 }
+        if let managedFamilyMessageNotificationsEnabledClosure = managedFamilyMessageNotificationsEnabledClosure {
+            return try await managedFamilyMessageNotificationsEnabledClosure()
+        } else {
+            return managedFamilyMessageNotificationsEnabledReturnValue
+        }
+    }
+    //MARK: - managedFamilyCallNotificationsEnabled
+
+    nonisolated(unsafe) var managedFamilyCallNotificationsEnabledThrowableError: Error?
+    private let managedFamilyCallNotificationsEnabledCallsCountLock = NSLock()
+    private nonisolated(unsafe) var managedFamilyCallNotificationsEnabledUnderlyingCallsCount = 0
+    var managedFamilyCallNotificationsEnabledCallsCount: Int {
+        get { managedFamilyCallNotificationsEnabledCallsCountLock.withLock { managedFamilyCallNotificationsEnabledUnderlyingCallsCount } }
+        set { managedFamilyCallNotificationsEnabledCallsCountLock.withLock { managedFamilyCallNotificationsEnabledUnderlyingCallsCount = newValue } }
+    }
+    var managedFamilyCallNotificationsEnabledCalled: Bool {
+        return managedFamilyCallNotificationsEnabledCallsCount > 0
+    }
+
+    private let managedFamilyCallNotificationsEnabledReturnValueLock = NSLock()
+    private nonisolated(unsafe) var managedFamilyCallNotificationsEnabledUnderlyingReturnValue: Bool?
+    var managedFamilyCallNotificationsEnabledReturnValue: Bool? {
+        get { managedFamilyCallNotificationsEnabledReturnValueLock.withLock { managedFamilyCallNotificationsEnabledUnderlyingReturnValue } }
+        set { managedFamilyCallNotificationsEnabledReturnValueLock.withLock { managedFamilyCallNotificationsEnabledUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var managedFamilyCallNotificationsEnabledClosure: (() async throws -> Bool?)?
+
+    @concurrent func managedFamilyCallNotificationsEnabled() async throws -> Bool? {
+        if let error = managedFamilyCallNotificationsEnabledThrowableError {
+            throw error
+        }
+        managedFamilyCallNotificationsEnabledCallsCountLock.withLock { managedFamilyCallNotificationsEnabledUnderlyingCallsCount += 1 }
+        if let managedFamilyCallNotificationsEnabledClosure = managedFamilyCallNotificationsEnabledClosure {
+            return try await managedFamilyCallNotificationsEnabledClosure()
+        } else {
+            return managedFamilyCallNotificationsEnabledReturnValue
+        }
     }
     //MARK: - isInviteForMeEnabled
 

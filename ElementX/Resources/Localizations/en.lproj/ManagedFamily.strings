@@ -1,5 +1,7 @@
 "managed_family_onboarding_continue" = "Continue";
-"managed_family_onboarding_message" = "Sign in with the account your family gave you. For first-time setup, ask the family member who installed the app to help.";
+"managed_family_onboarding_message" = "Sign in with the account your family gave you. Your family group opens automatically.";
 "managed_family_onboarding_title" = "Family chat";
-"managed_family_setup_needs_help" = "Family chat needs help";
-"managed_family_setup_needs_help_message" = "Open Settings to finish account setup, or ask the family member who installed the app to help.";
+"managed_family_setup_needs_help" = "Connecting to the family group";
+"managed_family_setup_needs_help_message" = "If it does not open, check the account in Settings or ask the family member who installed the app.";
+"managed_family_message_notifications" = "Message alerts";
+"managed_family_call_notifications" = "Incoming call alerts";

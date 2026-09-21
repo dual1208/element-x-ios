@@ -59,6 +59,7 @@ class SettingsFlowCoordinator: FlowCoordinatorProtocol {
         case .settings:
             presentSettingsScreen(animated: animated)
         case .chatBackupSettings:
+            guard flowParameters.appSettings.managedFamilyConfiguration == nil else { return }
             startEncryptionSettingsFlow()
         default:
             break
@@ -88,6 +89,7 @@ class SettingsFlowCoordinator: FlowCoordinatorProtocol {
                 case .logout:
                     actionsSubject.send(.runLogoutFlow)
                 case .secureBackup:
+                    guard flowParameters.appSettings.managedFamilyConfiguration == nil else { return }
                     startEncryptionSettingsFlow()
                 case .userDetails:
                     presentUserDetailsEditScreen()

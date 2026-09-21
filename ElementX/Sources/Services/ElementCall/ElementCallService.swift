@@ -32,6 +32,7 @@ class ElementCallService: NSObject, ElementCallServiceProtocol, PKPushRegistryDe
     private let callController = CXCallController()
     private let callProvider: CXProviderProtocol
     private let timeProvider: TimeProvider
+    private let incomingCallNotificationsEnabled: () -> Bool
     
     private weak var clientProxy: ClientProxyProtocol? {
         didSet {
@@ -67,10 +68,13 @@ class ElementCallService: NSObject, ElementCallServiceProtocol, PKPushRegistryDe
     
     private var declineListenerHandle: TaskHandle?
     
-    init(callProvider: CXProviderProtocol? = nil, timeProvider: TimeProvider? = nil) {
+    init(callProvider: CXProviderProtocol? = nil,
+         timeProvider: TimeProvider? = nil,
+         incomingCallNotificationsEnabled: @escaping () -> Bool = { true }) {
         pushRegistry = PKPushRegistry(queue: nil)
         
         self.timeProvider = timeProvider ?? TimeProvider(clock: ContinuousClock(), now: Date.init)
+        self.incomingCallNotificationsEnabled = incomingCallNotificationsEnabled
         
         if let callProvider {
             self.callProvider = callProvider
@@ -175,6 +179,13 @@ class ElementCallService: NSObject, ElementCallServiceProtocol, PKPushRegistryDe
         }
         
         let roomDisplayName = payload.dictionaryPayload[ElementCallServiceNotificationKey.roomDisplayName.rawValue] as? String
+        
+        guard incomingCallNotificationsEnabled() else {
+            reportImmediatelyEndedCall(reason: .unanswered,
+                                       callerInfo: (roomID: roomID, roomDisplayName: roomDisplayName),
+                                       completion: completion)
+            return
+        }
         
         guard ongoingCallID?.roomID != roomID else {
             MXLog.warning("Call already ongoing for room \(roomID), reporting the duplicate push as handled")

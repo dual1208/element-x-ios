@@ -163,14 +163,6 @@ class CallScreenViewModel: CallScreenViewModelType, CallScreenViewModelProtocol 
                 configuration.elementCallBaseURL
             }
             
-            // We only set the analytics configuration if analytics are enabled
-            let analyticsConfiguration: ElementCallAnalyticsConfiguration? = if analyticsService.isEnabled {
-                .init(posthogAPIHost: appSettings.elementCallPosthogAPIHost,
-                      posthogAPIKey: appSettings.elementCallPosthogAPIKey,
-                      sentryDSN: appSettings.elementCallPosthogSentryDSN)
-            } else {
-                nil
-            }
             let rageshakeURL: String? = if case let .url(baseURL) = appSettings.bugReportRageshakeURL.publisher.value {
                 baseURL.absoluteString
             } else {
@@ -181,8 +173,12 @@ class CallScreenViewModel: CallScreenViewModelType, CallScreenViewModelProtocol 
                                             clientID: configuration.clientID,
                                             colorScheme: configuration.colorScheme,
                                             voiceOnly: configuration.voiceOnly,
+                                            languageTag: appSettings.managedFamilyConfiguration == nil
+                                                ? "\(Locale.current.language.languageCode ?? "en")-\(Locale.current.language.region ?? "US")"
+                                                : "zh-CN",
+                                            allowMediaEncryption: appSettings.managedFamilyConfiguration == nil,
                                             rageshakeURL: rageshakeURL,
-                                            analyticsConfiguration: analyticsConfiguration) {
+                                            analyticsConfiguration: nil) {
             case .success(let url):
                 state.url = url
             case .failure(let error):

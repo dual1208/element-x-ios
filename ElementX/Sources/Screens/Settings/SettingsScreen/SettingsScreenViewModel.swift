@@ -30,16 +30,19 @@ class SettingsScreenViewModel: SettingsScreenViewModelType, SettingsScreenViewMo
         super.init(initialViewState: .init(deviceID: userSession.clientProxy.deviceID,
                                            userProfile: userSession.clientProxy.userProfilePublisher.value,
                                            showLinkNewDeviceButton: appSettings.linkNewDeviceEnabled,
-                                           showAccountDeactivation: userSession.clientProxy.canDeactivateAccount,
-                                           showDeveloperOptions: appSettings.developerOptionsEnabled,
+                                           showAccountDeactivation: appSettings.managedFamilyConfiguration == nil && userSession.clientProxy.canDeactivateAccount,
+                                           showDeveloperOptions: appSettings.managedFamilyConfiguration == nil && appSettings.developerOptionsEnabled,
+                                           isManagedFamilyMode: appSettings.managedFamilyConfiguration != nil,
                                            showAnalyticsSettings: appSettings.canPromptForAnalytics,
                                            isBugReportServiceEnabled: isBugReportServiceEnabled,
                                            navigationBarVisibility: isInSecondaryWindow ? .hidden : .automatic),
                    mediaProvider: userSession.mediaProvider)
         
-        appSettings.developerOptionsEnabledPublisher
-            .weakAssign(to: \.state.showDeveloperOptions, on: self)
-            .store(in: &cancellables)
+        if appSettings.managedFamilyConfiguration == nil {
+            appSettings.developerOptionsEnabledPublisher
+                .weakAssign(to: \.state.showDeveloperOptions, on: self)
+                .store(in: &cancellables)
+        }
         
         appSettings.linkNewDeviceEnabledPublisher
             .weakAssign(to: \.state.showLinkNewDeviceButton, on: self)
@@ -50,27 +53,29 @@ class SettingsScreenViewModel: SettingsScreenViewModelType, SettingsScreenViewMo
             .weakAssign(to: \.state.userProfile, on: self)
             .store(in: &cancellables)
         
-        userSession.sessionSecurityStatePublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] securityState in
-                guard let self else { return }
-                
-                switch (securityState.verificationState, securityState.recoveryState) {
-                case (.verified, .disabled):
-                    state.showSecuritySectionBadge = true
-                    state.securitySectionMode = .secureBackup
-                case (.verified, .incomplete):
-                    state.showSecuritySectionBadge = true
-                    state.securitySectionMode = .secureBackup
-                case (.unknown, _):
-                    state.showSecuritySectionBadge = false
-                    state.securitySectionMode = .none
-                default:
-                    state.showSecuritySectionBadge = false
-                    state.securitySectionMode = .secureBackup
+        if appSettings.managedFamilyConfiguration == nil {
+            userSession.sessionSecurityStatePublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] securityState in
+                    guard let self else { return }
+                    
+                    switch (securityState.verificationState, securityState.recoveryState) {
+                    case (.verified, .disabled):
+                        state.showSecuritySectionBadge = true
+                        state.securitySectionMode = .secureBackup
+                    case (.verified, .incomplete):
+                        state.showSecuritySectionBadge = true
+                        state.securitySectionMode = .secureBackup
+                    case (.unknown, _):
+                        state.showSecuritySectionBadge = false
+                        state.securitySectionMode = .none
+                    default:
+                        state.showSecuritySectionBadge = false
+                        state.securitySectionMode = .secureBackup
+                    }
                 }
-            }
-            .store(in: &cancellables)
+                .store(in: &cancellables)
+        }
         
         userSession.clientProxy.ignoredUsersPublisher
             .receive(on: DispatchQueue.main)
@@ -130,6 +135,7 @@ class SettingsScreenViewModel: SettingsScreenViewModelType, SettingsScreenViewMo
         case .logout:
             actionsSubject.send(.logout)
         case .secureBackup:
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             actionsSubject.send(.secureBackup)
         case .notifications:
             actionsSubject.send(.notifications)
@@ -138,6 +144,7 @@ class SettingsScreenViewModel: SettingsScreenViewModelType, SettingsScreenViewMo
         case .labs:
             actionsSubject.send(.labs)
         case .enableDeveloperOptions:
+            guard appSettings.managedFamilyConfiguration == nil else { return }
             appSettings.developerOptionsEnabled.toggle()
         case .developerOptions:
             actionsSubject.send(.developerOptions)

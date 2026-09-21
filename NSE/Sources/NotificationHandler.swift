@@ -56,6 +56,13 @@ nonisolated class NotificationHandler {
         case .processedShouldDiscard, .unsupportedShouldDiscard:
             discardNotification()
         case .shouldDisplay:
+            let alertsEnabled = isCallNotification(notificationItemProxy)
+                ? settings.managedFamilyCallNotificationsEnabled
+                : settings.managedFamilyMessageNotificationsEnabled
+            if !alertsEnabled {
+                discardNotification()
+                return
+            }
             if settings.hideQuietNotificationAlerts, !notificationItemProxy.isNoisy {
                 discardNotification()
                 return
@@ -77,6 +84,14 @@ nonisolated class NotificationHandler {
     }
     
     // MARK: - Private
+    
+    private func isCallNotification(_ itemProxy: NotificationItemProxyProtocol) -> Bool {
+        guard case let .timeline(event) = itemProxy.event,
+              case .messageLike(.rtcNotification) = try? event.content() else {
+            return false
+        }
+        return true
+    }
     
     private func deliverNotification() {
         MXLog.info("\(tag) Delivering notification")
@@ -168,6 +183,10 @@ nonisolated class NotificationHandler {
                                         expirationTimestamp: Timestamp,
                                         roomID: String,
                                         roomDisplayName: String, callIntent: RtcCallIntent?) async -> NotificationProcessingResult {
+        guard settings.managedFamilyCallNotificationsEnabled else {
+            return .processedShouldDiscard
+        }
+        
         // Handle incoming VoIP calls, show the native OS call screen
         // https://developer.apple.com/documentation/callkit/sending-end-to-end-encrypted-voip-calls
         //

@@ -21,6 +21,7 @@ nonisolated enum NotificationConstants {
     enum Category {
         static let message = "message"
         static let invite = "invite"
+        static let call = "call"
     }
     
     enum Action {

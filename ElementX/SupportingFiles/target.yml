@@ -51,6 +51,9 @@ targets:
         UILaunchScreen:
           UIColorName: colors/background-color
         CFBundleDisplayName: $(APP_DISPLAY_NAME)
+        CFBundleDevelopmentRegion: zh-Hans
+        CFBundleLocalizations:
+        - zh-Hans
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleURLTypes: [
@@ -86,12 +89,12 @@ targets:
           INSendMessageIntent,
           INStartCallIntent,
         ]
-        NSCameraUsageDescription: To take pictures or videos and send them as a message $(APP_DISPLAY_NAME) needs access to the camera.
-        NSMicrophoneUsageDescription: To record and send messages with audio, $(APP_DISPLAY_NAME) needs to access the microphone.
-        NSPhotoLibraryAddUsageDescription: This lets you save images and videos to your photo library.
-        NSLocationWhenInUseUsageDescription: Grant location access so that $(APP_DISPLAY_NAME) can share your location.
-        NSLocationAlwaysAndWhenInUseUsageDescription: To share your live location, $(APP_DISPLAY_NAME) needs location access when the app is in the background.
-        NSFaceIDUsageDescription: Face ID is used to access your app.
+        NSCameraUsageDescription: 家庭聊天需要使用相机来拍摄并发送照片或视频。
+        NSMicrophoneUsageDescription: 家庭聊天需要使用麦克风来发送语音消息和通话。
+        NSPhotoLibraryAddUsageDescription: 家庭聊天需要访问照片图库来保存图片和视频。
+        NSLocationWhenInUseUsageDescription: 家庭聊天需要获取位置来发送当前位置或附近地点。
+        NSLocationAlwaysAndWhenInUseUsageDescription: 家庭聊天需要在后台获取位置来共享实时位置。
+        NSFaceIDUsageDescription: 面容 ID 可保护你在家庭聊天中的账号。
         UIBackgroundModes: [
           audio,
           fetch,

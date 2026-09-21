@@ -29,6 +29,10 @@ protocol NotificationSettingsProxyProtocol {
     func setRoomMentionEnabled(enabled: Bool) async throws
     func isCallEnabled() async throws -> Bool
     func setCallEnabled(enabled: Bool) async throws
+    func setManagedFamilyMessageNotifications(roomID: String, enabled: Bool) async throws
+    func setManagedFamilyCallNotifications(roomID: String, enabled: Bool) async throws
+    func managedFamilyMessageNotificationsEnabled() async throws -> Bool?
+    func managedFamilyCallNotificationsEnabled() async throws -> Bool?
     func isInviteForMeEnabled() async throws -> Bool
     func setInviteForMeEnabled(enabled: Bool) async throws
     func getRoomsWithUserDefinedRules() async throws -> [String]

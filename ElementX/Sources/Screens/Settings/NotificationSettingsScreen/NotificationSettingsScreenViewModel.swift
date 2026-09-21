@@ -16,6 +16,7 @@ class NotificationSettingsScreenViewModel: NotificationSettingsScreenViewModelTy
     private let appSettings: AppSettings
     private let userNotificationCenter: UserNotificationCenterProtocol
     private let notificationSettingsProxy: NotificationSettingsProxyProtocol
+    private let managedFamilyRoomID: String?
     private let userIndicatorController: UserIndicatorControllerProtocol
     @CancellableTask private var fetchSettingsTask: Task<Void, Error>?
     private let notificationTonePreviewer: AudioPlayerProtocol
@@ -29,18 +30,24 @@ class NotificationSettingsScreenViewModel: NotificationSettingsScreenViewModelTy
          userNotificationCenter: UserNotificationCenterProtocol,
          notificationToneManager: NotificationToneManagerProtocol,
          notificationSettingsProxy: NotificationSettingsProxyProtocol,
+         managedFamilyRoomID: String? = nil,
          userIndicatorController: UserIndicatorControllerProtocol,
          isModallyPresented: Bool) {
         self.appSettings = appSettings
         self.userNotificationCenter = userNotificationCenter
         self.notificationSettingsProxy = notificationSettingsProxy
+        self.managedFamilyRoomID = managedFamilyRoomID
         self.userIndicatorController = userIndicatorController
         notificationTonePreviewer = AudioPlayer()
         self.notificationToneManager = notificationToneManager
         
-        let bindings = NotificationSettingsScreenViewStateBindings(enableNotifications: appSettings.enableNotifications)
+        let bindings = NotificationSettingsScreenViewStateBindings(enableNotifications: appSettings.enableNotifications,
+                                                                   callsEnabled: appSettings.managedFamilyCallNotificationsEnabled,
+                                                                   managedFamilyMessageNotificationsEnabled: appSettings.managedFamilyMessageNotificationsEnabled)
         super.init(initialViewState: NotificationSettingsScreenViewState(bindings: bindings,
                                                                          isModallyPresented: isModallyPresented,
+                                                                         isManagedFamilyMode: appSettings.managedFamilyConfiguration != nil,
+                                                                         managedFamilyMessageNotificationsAvailable: managedFamilyRoomID != nil,
                                                                          selectedAlertTone: appSettings.selectedNotificationTone ?? NotificationToneManager.defaultElementXMessageTone,
                                                                          availableCustomTones: notificationToneManager.customTones(),
                                                                          // macos lacks default sounds and its sandbox Sounds directory is immutable
@@ -97,6 +104,8 @@ class NotificationSettingsScreenViewModel: NotificationSettingsScreenViewModelTy
                 return
             }
             Task { await enableCalls(state.bindings.callsEnabled) }
+        case .managedFamilyMessageNotificationsChanged:
+            Task { await enableManagedFamilyMessages(state.bindings.managedFamilyMessageNotificationsEnabled) }
         case .invitationsChanged:
             guard let settings = state.settings, settings.invitationsEnabled != state.bindings.invitationsEnabled else {
                 return
@@ -197,6 +206,21 @@ class NotificationSettingsScreenViewModel: NotificationSettingsScreenViewModelTy
             state.settings = notificationSettings
             state.bindings.roomMentionsEnabled = notificationSettings.roomMentionsEnabled ?? false
             state.bindings.callsEnabled = notificationSettings.callsEnabled ?? false
+            if appSettings.managedFamilyConfiguration != nil {
+                var managedCallsEnabled = try? await notificationSettingsProxy.managedFamilyCallNotificationsEnabled()
+                if managedCallsEnabled == nil {
+                    managedCallsEnabled = notificationSettings.callsEnabled
+                }
+                let callsEnabled = managedCallsEnabled ?? appSettings.managedFamilyCallNotificationsEnabled
+                state.bindings.callsEnabled = callsEnabled
+                appSettings.managedFamilyCallNotificationsEnabled = callsEnabled
+                if let enabled = try? await notificationSettingsProxy.managedFamilyMessageNotificationsEnabled() {
+                    state.bindings.managedFamilyMessageNotificationsEnabled = enabled
+                    appSettings.managedFamilyMessageNotificationsEnabled = enabled
+                } else {
+                    state.bindings.managedFamilyMessageNotificationsEnabled = appSettings.managedFamilyMessageNotificationsEnabled
+                }
+            }
             state.bindings.invitationsEnabled = notificationSettings.invitationsEnabled ?? false
         }
     }
@@ -241,10 +265,32 @@ class NotificationSettingsScreenViewModel: NotificationSettingsScreenViewModelTy
         do {
             state.applyingChange = true
             MXLog.info("setCallEnabled(\(enable))")
-            try await notificationSettingsProxy.setCallEnabled(enabled: enable)
+            if let managedFamilyRoomID, appSettings.managedFamilyConfiguration != nil {
+                try await notificationSettingsProxy.setManagedFamilyCallNotifications(roomID: managedFamilyRoomID, enabled: enable)
+            } else {
+                try await notificationSettingsProxy.setCallEnabled(enabled: enable)
+            }
+            appSettings.managedFamilyCallNotificationsEnabled = enable
         } catch {
             state.bindings.alertInfo = AlertInfo(id: .alert)
             state.bindings.callsEnabled = notificationSettings.callsEnabled ?? false
+        }
+        state.applyingChange = false
+    }
+    
+    private func enableManagedFamilyMessages(_ enable: Bool) async {
+        guard let managedFamilyRoomID else {
+            state.bindings.managedFamilyMessageNotificationsEnabled = appSettings.managedFamilyMessageNotificationsEnabled
+            return
+        }
+        
+        do {
+            state.applyingChange = true
+            try await notificationSettingsProxy.setManagedFamilyMessageNotifications(roomID: managedFamilyRoomID, enabled: enable)
+            appSettings.managedFamilyMessageNotificationsEnabled = enable
+        } catch {
+            state.bindings.alertInfo = AlertInfo(id: .alert)
+            state.bindings.managedFamilyMessageNotificationsEnabled = appSettings.managedFamilyMessageNotificationsEnabled
         }
         state.applyingChange = false
     }

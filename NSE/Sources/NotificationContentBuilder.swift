@@ -77,6 +77,7 @@ nonisolated struct NotificationContentBuilder {
                     notificationContent.body = L10n.commonUnsupportedCall
                 case .rtcNotification:
                     notificationContent.body = L10n.notificationIncomingCall
+                    notificationContent.categoryIdentifier = NotificationConstants.Category.call
                 default:
                     processEmpty(&notificationContent)
                 }

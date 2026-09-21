@@ -44,7 +44,11 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
                                                     actions: [],
                                                     intentIdentifiers: [],
                                                     options: [])
-        notificationCenter.setNotificationCategories([messageCategory, inviteCategory])
+        let callCategory = UNNotificationCategory(identifier: NotificationConstants.Category.call,
+                                                  actions: [],
+                                                  intentIdentifiers: [],
+                                                  options: [])
+        notificationCenter.setNotificationCategories([messageCategory, inviteCategory, callCategory])
         notificationCenter.delegate = self
         
         notificationsEnabled = appSettings.enableNotifications
@@ -71,7 +75,7 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
                 let permissionGranted = try await notificationCenter.requestAuthorization(options: [.alert, .sound, .badge])
                 MXLog.info("Permission granted: \(permissionGranted)")
                 await MainActor.run {
-                    if permissionGranted {
+                    if permissionGranted, self.appSettings.remotePushNotificationsAvailable {
                         self.delegate?.registerForRemoteNotifications()
                     }
                 }
@@ -82,7 +86,7 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
     }
     
     func register(with deviceToken: Data) async -> Bool {
-        guard let userSession else {
+        guard appSettings.remotePushNotificationsAvailable, let userSession else {
             return false
         }
         return await setPusher(with: deviceToken, clientProxy: userSession.clientProxy)
@@ -96,9 +100,15 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
         Task { [weak self] in
             guard let self else { return }
             
-            if await notificationCenter.authorizationStatus() == .authorized, appSettings.enableNotifications {
+            if appSettings.remotePushNotificationsAvailable,
+               await notificationCenter.authorizationStatus() == .authorized,
+               appSettings.enableNotifications {
                 await MainActor.run { [weak self] in
                     self?.delegate?.registerForRemoteNotifications()
+                }
+            } else if !appSettings.remotePushNotificationsAvailable {
+                await MainActor.run { [weak self] in
+                    self?.delegate?.unregisterForRemoteNotifications()
                 }
             }
             
@@ -218,6 +228,13 @@ final class NotificationManager: NSObject, NotificationManagerProtocol {
 extension NotificationManager: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        if appSettings.managedFamilyConfiguration != nil {
+            if notification.request.content.categoryIdentifier == NotificationConstants.Category.call {
+                guard appSettings.managedFamilyCallNotificationsEnabled else { return [] }
+            } else {
+                guard appSettings.managedFamilyMessageNotificationsEnabled else { return [] }
+            }
+        }
         guard appSettings.enableInAppNotifications else {
             return []
         }

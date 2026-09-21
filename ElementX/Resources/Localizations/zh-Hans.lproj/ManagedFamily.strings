@@ -1,5 +1,7 @@
 "managed_family_onboarding_continue" = "继续";
-"managed_family_onboarding_message" = "使用家人给你的账号登录。第一次使用时，请让帮你安装的家人陪你完成设置。";
+"managed_family_onboarding_message" = "使用家人给你的账号登录。登录后会自动打开家庭群。";
 "managed_family_onboarding_title" = "家人聊天";
-"managed_family_setup_needs_help" = "家人聊天需要帮助";
-"managed_family_setup_needs_help_message" = "请打开“设置”完成账号设置，或请帮你安装这个应用的家人来处理。";
+"managed_family_setup_needs_help" = "正在连接家庭群";
+"managed_family_setup_needs_help_message" = "如果一直无法打开，请在“设置”中确认账号，或请帮你安装应用的家人处理。";
+"managed_family_message_notifications" = "消息提醒";
+"managed_family_call_notifications" = "来电提醒";

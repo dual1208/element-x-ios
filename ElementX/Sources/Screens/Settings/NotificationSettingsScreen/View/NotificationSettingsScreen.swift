@@ -15,7 +15,12 @@ struct NotificationSettingsScreen: View {
     
     var body: some View {
         Form {
-            if context.viewState.settings?.inconsistentSettings.isEmpty == false {
+            if context.viewState.isManagedFamilyMode {
+                managedFamilyNotificationSection
+                if context.viewState.showSystemNotificationsAlert {
+                    userPermissionSection
+                }
+            } else if context.viewState.settings?.inconsistentSettings.isEmpty == false {
                 configurationMismatchSection
             } else {
                 if context.viewState.showSystemNotificationsAlert {
@@ -46,6 +51,24 @@ struct NotificationSettingsScreen: View {
     }
     
     // MARK: - Private
+    
+    private var managedFamilyNotificationSection: some View {
+        Section {
+            ListRow(label: .plain(title: ManagedFamilyL10n.managedFamilyMessageNotifications),
+                    kind: .toggle($context.managedFamilyMessageNotificationsEnabled))
+                .disabled(!context.viewState.managedFamilyMessageNotificationsAvailable || context.viewState.applyingChange)
+                .onChange(of: context.managedFamilyMessageNotificationsEnabled) {
+                    context.send(viewAction: .managedFamilyMessageNotificationsChanged)
+                }
+            
+            ListRow(label: .plain(title: ManagedFamilyL10n.managedFamilyCallNotifications),
+                    kind: .toggle($context.callsEnabled))
+                .disabled(context.viewState.settings?.callsEnabled == nil || context.viewState.applyingChange)
+                .onChange(of: context.callsEnabled) {
+                    context.send(viewAction: .callsChanged)
+                }
+        }
+    }
     
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {

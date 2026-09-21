@@ -34,6 +34,8 @@ protocol ElementCallWidgetDriverProtocol {
                clientID: String,
                colorScheme: ColorScheme,
                voiceOnly: Bool,
+               languageTag: String,
+               allowMediaEncryption: Bool,
                rageshakeURL: String?,
                analyticsConfiguration: ElementCallAnalyticsConfiguration?) async -> Result<URL, ElementCallWidgetDriverError>
     

@@ -30,6 +30,8 @@ nonisolated protocol CommonSettingsProtocol: AnyObject, Sendable {
     var enableOnlySignedDeviceIsolationMode: Bool { get }
     var threadsEnabled: Bool { get }
     var hideQuietNotificationAlerts: Bool { get }
+    var managedFamilyMessageNotificationsEnabled: Bool { get set }
+    var managedFamilyCallNotificationsEnabled: Bool { get set }
 }
 
 nonisolated enum AppBuildType {
@@ -50,14 +52,14 @@ nonisolated enum AppBuildType {
     }
 }
 
-/// Configuration for the managed family build. Room IDs are public Matrix identifiers,
-/// while credentials and recovery material remain in the SDK's persistent stores.
+/// Configuration for the managed family build. Each account's assigned room is delivered
+/// through global account data so one binary can safely serve separate families and reviewers.
 nonisolated struct ManagedFamilyConfiguration: Equatable, Sendable {
     let accountProvider: String
-    let roomID: String
+    let assignedRoomEventType: String
     
     static let production = ManagedFamilyConfiguration(accountProvider: "8.163.2.191",
-                                                       roomID: "!zeH0LfJ1UQUIIR1Zm0or2b843_84zsDIYH4qxw-kDew")
+                                                       assignedRoomEventType: "io.familychat.assigned_room")
 }
 
 /// Store Element specific app settings.
@@ -72,6 +74,12 @@ final nonisolated class AppSettings: @unchecked Sendable {
     /// Non-`nil` for the thin managed-family variant. Tests and previews opt out by default.
     let managedFamilyConfiguration: ManagedFamilyConfiguration?
     
+    /// The family service has no APNs/Sygnal deployment yet. Keep pusher registration
+    /// disabled until the owner-operated gateway is available.
+    var remotePushNotificationsAvailable: Bool {
+        managedFamilyConfiguration == nil
+    }
+    
     static var appBuildType: AppBuildType {
         AppBuildType.current
     }
@@ -84,6 +92,16 @@ final nonisolated class AppSettings: @unchecked Sendable {
     func resetSessionSpecificSettings() {
         MXLog.warning("Resetting the user session specific AppSettings.")
         resetHasRunIdentityConfirmationOnboarding()
+        managedFamilyNotificationAccountID = nil
+        managedFamilyMessageNotificationsEnabled = true
+        managedFamilyCallNotificationsEnabled = true
+    }
+    
+    func activateManagedFamilyNotificationSettings(for accountID: String) {
+        guard managedFamilyNotificationAccountID != accountID else { return }
+        managedFamilyNotificationAccountID = accountID
+        managedFamilyMessageNotificationsEnabled = true
+        managedFamilyCallNotificationsEnabled = true
     }
     
     // MARK: - Hooks
@@ -219,8 +237,7 @@ final nonisolated class AppSettings: @unchecked Sendable {
     
     /// Any pre-defined static client registrations for OAuth issuers.
     let oAuthStaticRegistrations: [URL: String] = [
-        "https://8.163.2.191/auth/": "01M2VM6HEE7G54S8RFEJEFK7DT",
-        "https://id.thirdroom.io/realms/thirdroom": "elementx"
+        "https://8.163.2.191/auth/": "01M2VM6HEE7G54S8RFEJEFK7DT"
     ]
     /// The redirect URL used for OAuth. For the normal case we don't actually need the bundle ID as the web authentication session handles the redirect internally.
     /// However in the case where MAS sends the user to an external app, we need to make sure that the system will open the correct variant of the app (e.g. Nightly).
@@ -265,6 +282,15 @@ final nonisolated class AppSettings: @unchecked Sendable {
     
     @UserPreference(defaultValue: true)
     var enableInAppNotifications: Bool
+    
+    @UserPreference(defaultValue: true)
+    var managedFamilyMessageNotificationsEnabled: Bool
+    
+    @UserPreference(defaultValue: true)
+    var managedFamilyCallNotificationsEnabled: Bool
+    
+    @UserPreference
+    private var managedFamilyNotificationAccountID: String?
     
     @UserPreference(defaultValue: false)
     var hideQuietNotificationAlerts: Bool
@@ -388,11 +414,6 @@ final nonisolated class AppSettings: @unchecked Sendable {
     let elementCallBaseURL: URL = EmbeddedElementCall.appURL!
     #endif
     
-    // These are publicly availble on https://call.element.io so we don't neeed to treat them as secrets
-    let elementCallPosthogAPIHost = "https://posthog-element-call.element.io"
-    let elementCallPosthogAPIKey = "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU"
-    let elementCallPosthogSentryDSN = "https://3bd2f95ba5554d4497da7153b552ffb5@sentry.tools.element.io/41"
-    
     @UserPreference
     var elementCallBaseURLOverride: URL?
     
@@ -475,13 +496,34 @@ final nonisolated class AppSettings: @unchecked Sendable {
         self.store = store
         self.managedFamilyConfiguration = managedFamilyConfiguration
         if let managedFamilyConfiguration {
+            let serviceBaseURL = URL(string: "https://8.163.2.191")! // swiftlint:disable:this force_unwrapping
             accountProviders = [managedFamilyConfiguration.accountProvider]
             allowOtherAccountProviders = false
             showCreateAccountButton = false
+            websiteURL = serviceBaseURL
+            logoURL = serviceBaseURL
+            copyrightURL = serviceBaseURL
+            acceptableUseURL = serviceBaseURL
+            privacyURL = serviceBaseURL
+            let supportURL = serviceBaseURL.appending(path: "family/support")
+            encryptionURL = supportURL
+            deviceVerificationURL = supportURL
+            chatBackupDetailsURL = supportURL
+            identityPinningViolationDetailsURL = supportURL
+            historySharingDetailsURL = supportURL
+            elementWebHosts = []
+            accountProvisioningHost = managedFamilyConfiguration.accountProvider
+            pushGatewayBaseURL = serviceBaseURL.appending(path: "push")
             bugReportRageshakeURL = .init(.disabled)
             bugReportSentryURL = nil
             bugReportSentryRustURL = nil
             analyticsConfiguration = nil
+            analyticsTermsURL = nil
+            forceDisableE2EE.applyRemoteValue(true)
+            mapTilerConfiguration = RemotePreference(.init(baseURL: serviceBaseURL,
+                                                           apiKey: nil,
+                                                           lightStyleID: "",
+                                                           darkStyleID: ""))
         } else {
             bugReportRageshakeURL = .init(Secrets.rageshakeURL.map { .url(URL(string: $0)!) } ?? .disabled) // swiftlint:disable:this force_unwrapping
             bugReportSentryURL = Secrets.sentryDSN.map { URL(string: $0)! } // swiftlint:disable:this force_unwrapping

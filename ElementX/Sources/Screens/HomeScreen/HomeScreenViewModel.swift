@@ -64,38 +64,41 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             .weakAssign(to: \.state.userProfile, on: self)
             .store(in: &cancellables)
         
-        userSession.sessionSecurityStatePublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] securityState in
-                guard let self else { return }
-                
-                switch securityState.recoveryState {
-                case .disabled:
-                    if !state.securityBannerMode.isDismissed {
-                        state.securityBannerMode = .show(.setUpRecovery)
+        if appSettings.managedFamilyConfiguration == nil {
+            userSession.sessionSecurityStatePublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] securityState in
+                    guard let self else { return }
+                    
+                    switch securityState.recoveryState {
+                    case .disabled:
+                        if !state.securityBannerMode.isDismissed {
+                            state.securityBannerMode = .show(.setUpRecovery)
+                        }
+                    case .incomplete:
+                        state.securityBannerMode = .show(.recoveryOutOfSync)
+                    default:
+                        state.securityBannerMode = .none
                     }
-                case .incomplete:
-                    state.securityBannerMode = .show(.recoveryOutOfSync)
-                default:
-                    state.securityBannerMode = .none
                 }
-            }
-            .store(in: &cancellables)
-        
-        userSession.sessionSecurityStatePublisher
-            .receive(on: DispatchQueue.main)
-            .filter { state in
-                state.verificationState != .unknown
-                    && state.recoveryState != .settingUp
-                    && state.recoveryState != .unknown
-            }
-            .sink { [weak self] state in
-                guard let self else { return }
-                
-                self.analyticsService.updateUserProperties(AnalyticsEvent.newVerificationStateUserProperty(verificationState: state.verificationState, recoveryState: state.recoveryState))
-                self.analyticsService.trackSessionSecurityState(state)
-            }
-            .store(in: &cancellables)
+                .store(in: &cancellables)
+            
+            userSession.sessionSecurityStatePublisher
+                .receive(on: DispatchQueue.main)
+                .filter { state in
+                    state.verificationState != .unknown
+                        && state.recoveryState != .settingUp
+                        && state.recoveryState != .unknown
+                }
+                .sink { [weak self] state in
+                    guard let self else { return }
+                    
+                    self.analyticsService.updateUserProperties(AnalyticsEvent.newVerificationStateUserProperty(verificationState: state.verificationState,
+                                                                                                               recoveryState: state.recoveryState))
+                    self.analyticsService.trackSessionSecurityState(state)
+                }
+                .store(in: &cancellables)
+        }
         
         userSession.clientProxy.spaceService.spaceFilterPublisher
             .receive(on: DispatchQueue.main)
@@ -114,6 +117,19 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         
         selectedRoomPublisher
             .weakAssign(to: \.state.selectedRoomID, on: self)
+            .store(in: &cancellables)
+        
+        userSession.clientProxy.managedFamilyRoomIDPublisher
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                updateRooms()
+                if let roomSummaryProvider {
+                    updateRoomListMode(with: roomSummaryProvider.statePublisher.value,
+                                       hasRooms: roomSummaryProvider.roomListPublisher.value.contains { isAllowedManagedRoom($0.id) })
+                }
+            }
             .store(in: &cancellables)
         
         appSettings.roomListActivityVisibilityPublisher
@@ -197,13 +213,13 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     override func process(viewAction: HomeScreenViewAction) {
         switch viewAction {
         case .selectRoom(let roomIdentifier):
-            guard isAllowedManagedRoom(roomIdentifier), isManagedFamilyCryptoReady else { return }
+            guard isAllowedManagedRoom(roomIdentifier) else { return }
             actionsSubject.send(.presentRoom(roomIdentifier: roomIdentifier))
         case .detachRoom(let roomIdentifier):
             guard appSettings.managedFamilyConfiguration == nil else { return }
             actionsSubject.send(.detachRoom(roomIdentifier: roomIdentifier))
         case .showRoomDetails(let roomIdentifier):
-            guard isManagedFamilyCryptoReady else { return }
+            guard isAllowedManagedRoom(roomIdentifier) else { return }
             actionsSubject.send(.presentRoomDetails(roomIdentifier: roomIdentifier))
         case .leaveRoom(let roomIdentifier):
             guard appSettings.managedFamilyConfiguration == nil else { return }
@@ -297,12 +313,6 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         case .declineInvite(let roomIdentifier):
             Task { await showDeclineInviteConfirmationAlert(roomID: roomIdentifier) }
         }
-    }
-    
-    private var isManagedFamilyCryptoReady: Bool {
-        guard appSettings.managedFamilyConfiguration != nil else { return true }
-        let securityState = userSession.sessionSecurityStatePublisher.value
-        return securityState.verificationState == .verified && securityState.recoveryState == .enabled
     }
     
     // perphery: ignore - used in release mode
@@ -412,8 +422,8 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     }
     
     private func isAllowedManagedRoom(_ roomID: String) -> Bool {
-        guard let configuration = appSettings.managedFamilyConfiguration else { return true }
-        return roomID == configuration.roomID
+        guard appSettings.managedFamilyConfiguration != nil else { return true }
+        return roomID == userSession.clientProxy.managedFamilyRoomIDPublisher.value
     }
     
     private func markRoomAsFavourite(_ roomID: String, isFavourite: Bool) async {

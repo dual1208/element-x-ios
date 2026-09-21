@@ -22,6 +22,8 @@ struct NotificationSettingsScreenViewState: BindableState {
     var fixingConfigurationMismatch = false
     /// Hide calls settings until calls are available in El-X
     let showCallsSettings = false
+    let isManagedFamilyMode: Bool
+    let managedFamilyMessageNotificationsAvailable: Bool
     
     var showSystemNotificationsAlert: Bool {
         bindings.enableNotifications && isUserPermissionGranted == false
@@ -39,6 +41,7 @@ struct NotificationSettingsScreenViewStateBindings {
     var enableNotifications = false
     var roomMentionsEnabled = false
     var callsEnabled = false
+    var managedFamilyMessageNotificationsEnabled = true
     var invitationsEnabled = false
     var alertInfo: AlertInfo<NotificationSettingsScreenErrorType>?
     var shouldShowAlertSounds = false
@@ -92,6 +95,7 @@ enum NotificationSettingsScreenViewAction {
     case directChatsTapped
     case roomMentionChanged
     case callsChanged
+    case managedFamilyMessageNotificationsChanged
     case invitationsChanged
     case close
     case fixConfigurationMismatchTapped

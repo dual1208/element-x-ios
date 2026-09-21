@@ -92,10 +92,12 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     // MARK: - Private
     
     func asyncHandleAppRoute(_ appRoute: AppRoute, animated: Bool) async {
-        if let configuration = flowParameters.appSettings.managedFamilyConfiguration,
-           !isAllowedManagedRoute(appRoute, roomID: configuration.roomID) {
-            MXLog.warning("Ignoring a Chats route outside of the managed Family room.")
-            return
+        if flowParameters.appSettings.managedFamilyConfiguration != nil {
+            guard let roomID = userSession.clientProxy.managedFamilyRoomIDPublisher.value,
+                  isAllowedManagedRoute(appRoute, roomID: roomID) else {
+                MXLog.warning("Ignoring a Chats route outside of the managed Family room.")
+                return
+            }
         }
         
         showLoadingIndicator(delay: .seconds(0.5))
@@ -130,7 +132,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                 stateMachine.processEvent(.selectRoom(roomID: roomID, via: [], entryPoint: .roomDetails), userInfo: .init(animated: animated))
             }
         case .roomList:
-            if let roomID = flowParameters.appSettings.managedFamilyConfiguration?.roomID {
+            if flowParameters.appSettings.managedFamilyConfiguration != nil,
+               let roomID = userSession.clientProxy.managedFamilyRoomIDPublisher.value {
                 stateMachine.processEvent(.selectRoom(roomID: roomID, via: [], entryPoint: .room), userInfo: .init(animated: animated))
             } else {
                 roomFlowCoordinator?.clearRoute(animated: animated)
@@ -162,7 +165,10 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
         case .userProfile(let userID):
             stateMachine.processEvent(.showUserProfileScreen(userID: userID), userInfo: .init(animated: animated))
         case .share(let payload):
-            if let roomID = payload.roomID ?? flowParameters.appSettings.managedFamilyConfiguration?.roomID {
+            let managedRoomID = flowParameters.appSettings.managedFamilyConfiguration == nil
+                ? nil
+                : userSession.clientProxy.managedFamilyRoomIDPublisher.value
+            if let roomID = payload.roomID ?? managedRoomID {
                 stateMachine.processEvent(.selectRoom(roomID: roomID,
                                                       via: [],
                                                       entryPoint: .share(payload)),
@@ -563,6 +569,7 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
             case .presentCallScreen(let roomProxy, let isVoiceCall):
                 actionsSubject.send(.showCallScreen(roomProxy: roomProxy, isVoiceCall: isVoiceCall))
             case .verifyUser(let userID):
+                guard flowParameters.appSettings.managedFamilyConfiguration == nil else { return }
                 actionsSubject.send(.sessionVerification(.userInitiator(userID: userID)))
             case .continueWithSpaceFlow(let spaceRoomListProxy):
                 stateMachine.processEvent(.startSpaceFlow, userInfo: .init(animated: false, spaceRoomListProxy: spaceRoomListProxy))

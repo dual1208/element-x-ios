@@ -7,11 +7,10 @@
 //
 
 import CryptoKit
-import Sentry
 
-/// A simple wrapper around Sentry for easy instrumentation
+/// A local no-op timing surface retained for upstream call sites.
 class Signposter {
-    private var transactions = [TransactionName: any Sentry.Span]()
+    private var transactions = Set<TransactionName>()
     
     private var globalTags = [TagName: String]()
     
@@ -43,11 +42,7 @@ class Signposter {
     }
     
     struct Span {
-        fileprivate let innerSpan: Sentry.Span
-        
-        func finish() {
-            innerSpan.finish()
-        }
+        func finish() { }
     }
     
     enum TagName: String {
@@ -57,22 +52,11 @@ class Signposter {
     // MARK: - Transactions
     
     func startTransaction(_ transactionName: TransactionName, operation: String = "ux", tags: [TagName: String] = [:]) {
-        let span = SentrySDK.startTransaction(name: transactionName.id, operation: operation)
-        
-        tags
-            .merging(globalTags) { tagValue, _ in
-                tagValue
-            }
-            .forEach { (key: TagName, value: String) in
-                span.setTag(value: value, key: key.rawValue)
-            }
-        
-        transactions[transactionName] = span
+        transactions.insert(transactionName)
     }
     
     func finishTransaction(_ transactionName: TransactionName) {
-        transactions[transactionName]?.finish()
-        transactions[transactionName] = nil
+        transactions.remove(transactionName)
     }
     
     func resetTransactions() {
@@ -82,12 +66,12 @@ class Signposter {
     // MARK: - Spans
     
     func addSpan(_ spanName: SpanName, toTransaction transactionName: TransactionName) -> Span? {
-        guard let transaction = transactions[transactionName] else {
+        guard transactions.contains(transactionName) else {
             MXLog.error("Transaction not started or already finished")
             return nil
         }
         
-        return Span(innerSpan: transaction.startChild(operation: spanName.rawValue))
+        return Span()
     }
     
     // MARK: - Tags
