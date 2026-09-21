@@ -244,8 +244,8 @@ targets:
         esac
         /usr/bin/openssl pkcs12 -in "$FAMILY_CLIENT_P12_PATH" -passin pass: -clcerts -nokeys -out "$leaf_certificate" >/dev/null 2>&1
         /usr/bin/openssl pkcs12 -in "$FAMILY_CLIENT_P12_PATH" -passin pass: -cacerts -nokeys -out "$ca_certificates" >/dev/null 2>&1
-        subject="$(/usr/bin/openssl x509 -in "$leaf_certificate" -noout -subject -nameopt RFC2253)"
-        case ",${subject#subject=}," in
+        subject="$(/usr/bin/openssl x509 -in "$leaf_certificate" -noout -subject -nameopt RFC2253 | /usr/bin/sed 's/^subject=[[:space:]]*//')"
+        case ",$subject," in
             *",CN=$expected_common_name,"*) ;;
             *) echo "error: family-client.p12 does not match this app version and build."; exit 1 ;;
         esac
