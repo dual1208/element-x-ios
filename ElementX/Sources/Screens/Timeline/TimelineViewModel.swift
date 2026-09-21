@@ -898,17 +898,7 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     
     private func buildTimelineViews(timelineItems: [RoomTimelineItemProtocol], isSwitchingTimelines: Bool = false) {
         var timelineItemsDictionary = OrderedDictionary<TimelineItemIdentifier.UniqueID, RoomTimelineItemViewState>()
-        var displayedTimelineItems = timelineItems
-        if appSettings.managedFamilyConfiguration != nil {
-            displayedTimelineItems.removeAll {
-                $0 is StateRoomTimelineItem || $0 is CollapsibleTimelineItem || $0 is TimelineStartRoomTimelineItem
-            }
-            displayedTimelineItems = displayedTimelineItems.enumerated().compactMap { index, item in
-                guard item is SeparatorRoomTimelineItem else { return item }
-                let itemsUntilNextSeparator = displayedTimelineItems.dropFirst(index + 1).prefix { !($0 is SeparatorRoomTimelineItem) }
-                return itemsUntilNextSeparator.contains { $0 is EventBasedTimelineItemProtocol } ? item : nil
-            }
-        }
+        let displayedTimelineItems = appSettings.managedFamilyConfiguration == nil ? timelineItems : managedFamilyTimelineItems(from: timelineItems)
         
         displayedTimelineItems.filter { $0 is RedactedRoomTimelineItem }.forEach { timelineItem in
             // Stops the audio player when a voice message is redacted.
@@ -1194,6 +1184,18 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                                                               title: title,
                                                               icon: \.close))
     }
+}
+
+private func managedFamilyTimelineItems(from timelineItems: [RoomTimelineItemProtocol]) -> [RoomTimelineItemProtocol] {
+    var displayedTimelineItems = timelineItems.filter {
+        !($0 is StateRoomTimelineItem) && !($0 is CollapsibleTimelineItem) && !($0 is TimelineStartRoomTimelineItem)
+    }
+    displayedTimelineItems = displayedTimelineItems.enumerated().compactMap { index, item in
+        guard item is SeparatorRoomTimelineItem else { return item }
+        let itemsUntilNextSeparator = displayedTimelineItems.dropFirst(index + 1).prefix { !($0 is SeparatorRoomTimelineItem) }
+        return itemsUntilNextSeparator.contains { $0 is EventBasedTimelineItemProtocol } ? item : nil
+    }
+    return displayedTimelineItems
 }
 
 // MARK: - Selection
