@@ -5,3 +5,6 @@
 "managed_family_setup_needs_help_message" = "If it does not open, check the account in Settings or ask the family member who installed the app.";
 "managed_family_message_notifications" = "Message alerts";
 "managed_family_call_notifications" = "Incoming call alerts";
+"managed_family_logout_title" = "Sign out";
+"managed_family_logout_message" = "You can sign back in later with the same account.";
+"managed_family_logout_submit" = "Sign out";

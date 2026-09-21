@@ -707,9 +707,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private func runLogoutFlow() async {
         if flowParameters.appSettings.managedFamilyConfiguration != nil {
             navigationRootCoordinator.alertInfo = .init(id: .init(),
-                                                        title: L10n.screenSignoutConfirmationDialogTitle,
-                                                        message: L10n.screenSignoutConfirmationDialogContent,
-                                                        primaryButton: .init(title: L10n.screenSignoutConfirmationDialogSubmit,
+                                                        title: ManagedFamilyL10n.managedFamilyLogoutTitle,
+                                                        message: ManagedFamilyL10n.managedFamilyLogoutMessage,
+                                                        primaryButton: .init(title: ManagedFamilyL10n.managedFamilyLogoutSubmit,
                                                                              role: .destructive) { [weak self] in
                                                             self?.actionsSubject.send(.logout)
                                                         })

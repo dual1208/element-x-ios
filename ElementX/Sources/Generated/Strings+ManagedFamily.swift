@@ -12,6 +12,12 @@ import Foundation
 internal nonisolated enum ManagedFamilyL10n {
   /// Incoming call alerts
   internal static var managedFamilyCallNotifications: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_call_notifications") }
+  /// You can sign back in later with the same account.
+  internal static var managedFamilyLogoutMessage: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_logout_message") }
+  /// Sign out
+  internal static var managedFamilyLogoutSubmit: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_logout_submit") }
+  /// Sign out
+  internal static var managedFamilyLogoutTitle: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_logout_title") }
   /// Message alerts
   internal static var managedFamilyMessageNotifications: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_message_notifications") }
   /// Continue

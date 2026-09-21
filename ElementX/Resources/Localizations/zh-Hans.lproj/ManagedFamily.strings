@@ -5,3 +5,6 @@
 "managed_family_setup_needs_help_message" = "如果一直无法打开，请在“设置”中确认账号，或请帮你安装应用的家人处理。";
 "managed_family_message_notifications" = "消息提醒";
 "managed_family_call_notifications" = "来电提醒";
+"managed_family_logout_title" = "退出登录";
+"managed_family_logout_message" = "退出后，可以使用原账号重新登录。";
+"managed_family_logout_submit" = "退出登录";
