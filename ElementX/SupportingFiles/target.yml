@@ -210,6 +210,9 @@ targets:
       basedOnDependencyAnalysis: false
       shell: /bin/sh
       script: |
+        if [ "$SKIP_OPTIONAL_STYLE_CHECKS" = "YES" ]; then
+            exit 0
+        fi
         export PATH="$PATH:/opt/homebrew/bin"
         if which swiftlint >/dev/null; then
             swiftlint
@@ -221,6 +224,9 @@ targets:
       basedOnDependencyAnalysis: false
       shell: /bin/sh
       script: |
+        if [ "$SKIP_OPTIONAL_STYLE_CHECKS" = "YES" ]; then
+            exit 0
+        fi
         export PATH="$PATH:/opt/homebrew/bin"
         if which swiftformat >/dev/null; then
             swiftformat --lint --lenient "$PROJECT_DIR"

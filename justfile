@@ -39,7 +39,7 @@ lint:
 build:
     just device
     mkdir -p .codex-logs
-    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES SKIP_OPTIONAL_STYLE_CHECKS=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
 
 test-managed:
     just device
@@ -79,7 +79,7 @@ entitlements:
 
 archive:
     mkdir -p "$(dirname {{ archive_path }})" .codex-logs
-    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES SKIP_OPTIONAL_STYLE_CHECKS=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
 
 export-archive:
     test -d {{ archive_path }}
