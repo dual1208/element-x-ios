@@ -363,7 +363,7 @@ private struct NavigationSplitCoordinatorView: View {
     
     var body: some View {
         Group {
-            if horizontalSizeClass == .compact {
+            if horizontalSizeClass == .compact || navigationSplitCoordinator.prefersDetailOnly {
                 navigationStack
             } else {
                 navigationSplitView
@@ -428,25 +428,12 @@ private struct NavigationSplitCoordinatorView: View {
             }
         }
         .navigationSplitViewStyle(.balanced)
-        .modifier(SidebarToggleVisibilityModifier(isHidden: navigationSplitCoordinator.prefersDetailOnly))
         .navigationDestination(for: NavigationModule.self) { module in
             module.coordinator?.toPresentable()
                 .id(module.id)
         }
         .animation(.elementDefault, value: navigationSplitCoordinator.sidebarModule)
         .animation(.noAnimation, value: navigationSplitCoordinator.detailModule) // Don't crossfade the detail transition on iPad.
-    }
-}
-
-private struct SidebarToggleVisibilityModifier: ViewModifier {
-    let isHidden: Bool
-    
-    func body(content: Content) -> some View {
-        if isHidden {
-            content.toolbar(removing: .sidebarToggle)
-        } else {
-            content
-        }
     }
 }
 
