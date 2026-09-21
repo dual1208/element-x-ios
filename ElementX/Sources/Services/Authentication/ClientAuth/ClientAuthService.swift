@@ -65,7 +65,7 @@ final nonisolated class ClientAuthService: ClientAuthServiceProtocol, Sendable {
         var data = Data()
         let response: URLResponse
         do {
-            let (bytes, urlResponse) = try await session.bytes(for: request)
+            let (bytes, urlResponse) = try await session.bytes(for: request, delegate: delegate)
             response = urlResponse
             if urlResponse.expectedContentLength > Int64(maximumResponseSize) {
                 throw ClientAuthServiceError.invalidResponse
@@ -170,6 +170,18 @@ private final nonisolated class ClientAuthURLSessionDelegate: NSObject, URLSessi
     func urlSession(_ session: URLSession,
                     didReceive challenge: URLAuthenticationChallenge,
                     completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        handle(challenge: challenge, completionHandler: completionHandler)
+    }
+    
+    func urlSession(_ session: URLSession,
+                    task: URLSessionTask,
+                    didReceive challenge: URLAuthenticationChallenge,
+                    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        handle(challenge: challenge, completionHandler: completionHandler)
+    }
+    
+    private func handle(challenge: URLAuthenticationChallenge,
+                        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         let protectionSpace = challenge.protectionSpace
         guard protectionSpace.authenticationMethod == NSURLAuthenticationMethodClientCertificate else {
             completionHandler(.performDefaultHandling, nil)
