@@ -80,8 +80,13 @@ final class ElementCallWidgetDriver: WidgetCapabilitiesProvider, ElementCallWidg
             return .failure(.roomInvalid)
         }
         
-        async let useEncryption = allowMediaEncryption && ((try? room.latestEncryptionState() == .encrypted) ?? false)
         async let intent = room.joinCallIntent(voiceOnly: voiceOnly)
+        let useEncryption: Bool
+        if allowMediaEncryption {
+            useEncryption = await (try? room.latestEncryptionState()) == .encrypted
+        } else {
+            useEncryption = false
+        }
         
         let widgetSettings: WidgetSettings
         do {
