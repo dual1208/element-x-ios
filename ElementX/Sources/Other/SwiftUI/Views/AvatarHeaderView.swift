@@ -35,6 +35,7 @@ struct AvatarHeaderView<Footer: View>: View {
     @ViewBuilder private var footer: () -> Footer
     
     init(room: RoomDetails,
+         showsEncryptionBadge: Bool = true,
          avatarSize: Avatars.Size,
          mediaProvider: MediaProviderProtocol? = nil,
          onAvatarTap: ((URL) -> Void)? = nil,
@@ -59,7 +60,9 @@ struct AvatarHeaderView<Footer: View>: View {
         self.footer = footer
         
         var badges = [Badge]()
-        badges.append(.encrypted(room.isEncrypted))
+        if showsEncryptionBadge {
+            badges.append(.encrypted(room.isEncrypted))
+        }
         if room.isPublic {
             badges.append(.public)
         }

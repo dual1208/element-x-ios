@@ -65,6 +65,7 @@ final class ComposerToolbarViewModel: ComposerToolbarViewModelType, ComposerTool
         
         super.init(initialViewState: ComposerToolbarViewState(wysiwygViewModel: wysiwygViewModel,
                                                               isRoomEncrypted: roomProxy.infoPublisher.value.isEncrypted,
+                                                              showsEncryptionStatus: appSettings.managedFamilyConfiguration == nil,
                                                               isLocationSharingEnabled: appSettings.mapTilerConfiguration.publisher.value.isEnabled,
                                                               bindings: .init()),
                    mediaProvider: mediaProvider)

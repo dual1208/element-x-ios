@@ -72,6 +72,7 @@ struct RoomDetailsScreen: View {
     
     private var roomHeaderSection: some View {
         AvatarHeaderView(room: context.viewState.details,
+                         showsEncryptionBadge: context.viewState.showsEncryptionBadge,
                          avatarSize: .room(on: .details),
                          mediaProvider: context.mediaProvider) { url in
             context.send(viewAction: .displayAvatar(url))

@@ -61,6 +61,7 @@ class RoomDetailsScreenViewModel: RoomDetailsScreenViewModelType, RoomDetailsScr
         let topic = attributedStringBuilder.fromPlain(roomProxy.infoPublisher.value.topic)
         
         let viewState = RoomDetailsScreenViewState(details: roomProxy.details,
+                                                   showsEncryptionBadge: appSettings.managedFamilyConfiguration == nil,
                                                    isEncrypted: roomProxy.infoPublisher.value.isEncrypted,
                                                    isDirect: roomProxy.infoPublisher.value.isDirect,
                                                    topic: topic,

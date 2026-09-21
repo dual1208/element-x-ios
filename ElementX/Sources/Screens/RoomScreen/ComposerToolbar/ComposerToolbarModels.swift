@@ -77,6 +77,7 @@ struct ComposerToolbarViewState: BindableState {
     var suggestions: [SuggestionItem] = []
     
     var isRoomEncrypted: Bool
+    var showsEncryptionStatus: Bool
     var isLocationSharingEnabled: Bool
     
     var keyCommands: [WysiwygKeyCommand] = []

@@ -41,6 +41,7 @@ struct DMRecipientInfo {
 
 struct RoomDetailsScreenViewState: BindableState {
     var details: RoomDetails
+    var showsEncryptionBadge: Bool
     
     var isEncrypted: Bool
     var isDirect: Bool

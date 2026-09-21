@@ -61,7 +61,7 @@ struct ComposerToolbar: View {
         }
         .readFrame($frame)
         .safeAreaInset(edge: .top) {
-            if !context.viewState.isRoomEncrypted {
+            if context.viewState.showsEncryptionStatus, !context.viewState.isRoomEncrypted {
                 Label {
                     Text(L10n.commonNotEncrypted)
                         .font(.compound.bodySM)
