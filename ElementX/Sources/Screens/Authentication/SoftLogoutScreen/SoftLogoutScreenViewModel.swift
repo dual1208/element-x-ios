@@ -21,11 +21,13 @@ class SoftLogoutScreenViewModel: SoftLogoutScreenViewModelType, SoftLogoutScreen
     init(credentials: SoftLogoutScreenCredentials,
          homeserver: LoginHomeserver,
          keyBackupNeeded: Bool,
+         isManagedFamilyMode: Bool = false,
          password: String = "") {
         let bindings = SoftLogoutScreenBindings(password: password)
         let viewState = SoftLogoutScreenViewState(credentials: credentials,
                                                   homeserver: homeserver,
                                                   keyBackupNeeded: keyBackupNeeded,
+                                                  isManagedFamilyMode: isManagedFamilyMode,
                                                   bindings: bindings)
         super.init(initialViewState: viewState)
     }

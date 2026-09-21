@@ -18,6 +18,7 @@ class AuthenticationService: AuthenticationServiceProtocol {
     private let userSessionStore: UserSessionStoreProtocol
     private let classicAppManager: ClassicAppManagerProtocol?
     private let clientFactory: ClientFactoryProtocol
+    private let clientAuthService: ClientAuthServiceProtocol
     private let appSettings: AppSettings
     private let appHooks: AppHooks
     
@@ -34,6 +35,7 @@ class AuthenticationService: AuthenticationServiceProtocol {
          encryptionKeyProvider: EncryptionKeyProviderProtocol,
          classicAppManager: ClassicAppManagerProtocol?,
          clientFactory: ClientFactoryProtocol = ClientFactory(),
+         clientAuthService: ClientAuthServiceProtocol = ClientAuthService(),
          appSettings: AppSettings,
          appHooks: AppHooks) {
         sessionDirectories = .init()
@@ -42,6 +44,7 @@ class AuthenticationService: AuthenticationServiceProtocol {
         self.userSessionStore = userSessionStore
         self.classicAppManager = classicAppManager
         self.clientFactory = clientFactory
+        self.clientAuthService = clientAuthService
         self.appSettings = appSettings
         self.appHooks = appHooks
         
@@ -74,15 +77,23 @@ class AuthenticationService: AuthenticationServiceProtocol {
         do {
             var homeserver = LoginHomeserver(address: homeserverAddress, loginMode: .unknown)
             
-            let client = try await makeClient(homeserverAddress: homeserverAddress)
-            let loginDetails = await client.homeserverLoginDetails()
+            if let configuration = appSettings.managedFamilyConfiguration,
+               !isManagedHomeserverAddress(homeserverAddress, accountProvider: configuration.accountProvider) {
+                return .failure(.invalidServer)
+            }
             
-            homeserver.loginMode = if loginDetails.supportsOauthLogin() {
-                .oAuth(supportsCreatePrompt: loginDetails.supportedOauthPrompts().contains(.create))
-            } else if loginDetails.supportsPasswordLogin() {
-                .password
+            let client = try await makeClient(homeserverAddress: homeserverAddress)
+            if appSettings.managedFamilyConfiguration != nil {
+                homeserver.loginMode = .password
             } else {
-                .unsupported
+                let loginDetails = await client.homeserverLoginDetails()
+                homeserver.loginMode = if loginDetails.supportsOauthLogin() {
+                    .oAuth(supportsCreatePrompt: loginDetails.supportedOauthPrompts().contains(.create))
+                } else if loginDetails.supportsPasswordLogin() {
+                    .password
+                } else {
+                    .unsupported
+                }
             }
             
             if flow == .login, homeserver.loginMode == .unsupported {
@@ -149,6 +160,13 @@ class AuthenticationService: AuthenticationServiceProtocol {
     
     func login(username: String, password: String, initialDeviceName: String?, deviceID: String?) async -> Result<UserSessionProtocol, AuthenticationServiceError> {
         guard let client else { return .failure(.failedLoggingIn) }
+        if appSettings.managedFamilyConfiguration != nil {
+            return await loginWithClientAuth(username: username,
+                                             password: password,
+                                             initialDeviceName: initialDeviceName,
+                                             client: client)
+        }
+        
         do {
             try await client.login(username: username, password: password, initialDeviceName: initialDeviceName, deviceId: deviceID)
             
@@ -174,6 +192,36 @@ class AuthenticationService: AuthenticationServiceProtocol {
             }
         } catch {
             MXLog.error("Failed logging in with error: \(error)")
+            return .failure(.failedLoggingIn)
+        }
+    }
+    
+    private func loginWithClientAuth(username: String,
+                                     password: String,
+                                     initialDeviceName: String?,
+                                     client: ClientProtocol) async -> Result<UserSessionProtocol, AuthenticationServiceError> {
+        do {
+            let clientAuthSession = try await clientAuthService.login(username: username,
+                                                                      password: password,
+                                                                      initialDeviceName: initialDeviceName ?? InfoPlistReader.main.bundleDisplayName)
+            let session = Session(accessToken: clientAuthSession.accessToken,
+                                  refreshToken: nil,
+                                  userId: clientAuthSession.userID,
+                                  deviceId: clientAuthSession.deviceID,
+                                  homeserverUrl: "https://8.163.2.191",
+                                  oauthData: nil,
+                                  slidingSyncVersion: .native)
+            try await client.restoreSessionWith(session: session, roomLoadSettings: .all)
+            await verifyClientIfPossible(client: client)
+            return await userSession(for: client)
+        } catch ClientAuthServiceError.invalidCredentials {
+            return .failure(.invalidCredentials)
+        } catch ClientAuthServiceError.releaseNotAllowed {
+            return .failure(.clientReleaseNotAllowed)
+        } catch ClientAuthServiceError.unavailable {
+            return .failure(.loginServiceUnavailable)
+        } catch {
+            MXLog.error("Failed restoring a native client-auth session.")
             return .failure(.failedLoggingIn)
         }
     }
@@ -261,6 +309,19 @@ class AuthenticationService: AuthenticationServiceProtocol {
         try await appHooks.remoteSettingsHook.initializeCache(using: client, applyingTo: appSettings).get()
         
         return appHooks.clientFactoryHook.updateAuthenticationClient(client)
+    }
+    
+    private func isManagedHomeserverAddress(_ address: String, accountProvider: String) -> Bool {
+        guard address != accountProvider else { return true }
+        guard let components = URLComponents(string: address) else { return false }
+        return components.scheme == "https" &&
+            components.host == accountProvider &&
+            (components.port == nil || components.port == 443) &&
+            (components.path.isEmpty || components.path == "/") &&
+            components.user == nil &&
+            components.password == nil &&
+            components.query == nil &&
+            components.fragment == nil
     }
     
     private func rotateSessionDirectory() {

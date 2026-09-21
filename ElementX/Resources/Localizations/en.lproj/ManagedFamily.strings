@@ -8,3 +8,9 @@
 "managed_family_logout_title" = "Sign out";
 "managed_family_logout_message" = "You can sign back in later with the same account.";
 "managed_family_logout_submit" = "Sign out";
+"managed_family_login_invalid_credentials" = "The username or password is incorrect.";
+"managed_family_login_release_not_allowed" = "This app version is not authorized. Ask the person who installed it to update the app.";
+"managed_family_login_submit" = "Sign in";
+"managed_family_login_title" = "Sign in";
+"managed_family_login_unavailable" = "Sign-in is temporarily unavailable. Try again later.";
+"managed_family_soft_logout_message" = "Your sign-in expired. Enter your password again.";

@@ -33,6 +33,8 @@ enum AuthenticationServiceError: Error, Equatable {
     case registrationNotSupported
     case elementProRequired(serverName: String)
     case accountDeactivated
+    case clientReleaseNotAllowed
+    case loginServiceUnavailable
     case failedLoggingIn
     case sessionTokenRefreshNotSupported
 }

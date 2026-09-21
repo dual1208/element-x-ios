@@ -33,8 +33,10 @@ struct SoftLogoutScreen: View {
                     loginUnavailableText
                 }
                 
-                clearDataForm
-                    .padding(.top, 16)
+                if !context.viewState.isManagedFamilyMode {
+                    clearDataForm
+                        .padding(.top, 16)
+                }
             }
             .readableFrame()
             .padding(.horizontal, 16)
@@ -50,13 +52,19 @@ struct SoftLogoutScreen: View {
     /// The title, message and icon at the top of the screen.
     var header: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(UntranslatedL10n.softLogoutSigninTitle)
+            Text(context.viewState.isManagedFamilyMode
+                ? ManagedFamilyL10n.managedFamilyLoginTitle
+                : UntranslatedL10n.softLogoutSigninTitle)
                 .font(.compound.headingMDBold)
                 .multilineTextAlignment(.leading)
                 .foregroundColor(.compound.textPrimary)
                 .accessibilityIdentifier(A11yIdentifiers.softLogoutScreen.title)
             
-            Text(UntranslatedL10n.softLogoutSigninNotice(context.viewState.credentials.homeserverName, context.viewState.credentials.userDisplayName, context.viewState.credentials.userID))
+            Text(context.viewState.isManagedFamilyMode
+                ? ManagedFamilyL10n.managedFamilySoftLogoutMessage
+                : UntranslatedL10n.softLogoutSigninNotice(context.viewState.credentials.homeserverName,
+                                                          context.viewState.credentials.userDisplayName,
+                                                          context.viewState.credentials.userID))
                 .font(.compound.bodyLG)
                 .multilineTextAlignment(.leading)
                 .foregroundColor(.compound.textPrimary)
@@ -82,16 +90,20 @@ struct SoftLogoutScreen: View {
                 .onSubmit(submit)
                 .accessibilityIdentifier(A11yIdentifiers.softLogoutScreen.password)
             
-            Button { context.send(viewAction: .forgotPassword) } label: {
-                Text(L10n.actionForgotPassword)
-                    .font(.compound.bodyLG)
+            if !context.viewState.isManagedFamilyMode {
+                Button { context.send(viewAction: .forgotPassword) } label: {
+                    Text(L10n.actionForgotPassword)
+                        .font(.compound.bodyLG)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.bottom, 8)
+                .accessibilityIdentifier(A11yIdentifiers.softLogoutScreen.forgotPassword)
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding(.bottom, 8)
-            .accessibilityIdentifier(A11yIdentifiers.softLogoutScreen.forgotPassword)
             
             Button(action: submit) {
-                Text(L10n.actionNext)
+                Text(context.viewState.isManagedFamilyMode
+                    ? ManagedFamilyL10n.managedFamilyLoginSubmit
+                    : L10n.actionNext)
             }
             .buttonStyle(.compound(.primary))
             .disabled(!context.viewState.canSubmit)

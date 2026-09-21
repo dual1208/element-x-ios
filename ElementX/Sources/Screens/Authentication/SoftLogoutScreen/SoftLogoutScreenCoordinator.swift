@@ -59,7 +59,8 @@ final class SoftLogoutScreenCoordinator: CoordinatorProtocol {
         let homeserver = parameters.authenticationService.homeserver
         viewModel = SoftLogoutScreenViewModel(credentials: parameters.credentials,
                                               homeserver: homeserver.value,
-                                              keyBackupNeeded: parameters.keyBackupNeeded)
+                                              keyBackupNeeded: parameters.keyBackupNeeded,
+                                              isManagedFamilyMode: parameters.appSettings.managedFamilyConfiguration != nil)
     }
     
     // MARK: - Public
@@ -125,7 +126,11 @@ final class SoftLogoutScreenCoordinator: CoordinatorProtocol {
     
     /// Login with the supplied username and password.
     private func login(withPassword password: String) {
-        let username = parameters.credentials.userID
+        let username = if parameters.appSettings.managedFamilyConfiguration != nil {
+            managedLocalpart(from: parameters.credentials.userID)
+        } else {
+            parameters.credentials.userID
+        }
         
         startLoading()
         
@@ -142,6 +147,16 @@ final class SoftLogoutScreenCoordinator: CoordinatorProtocol {
                 handleError(error)
             }
         }
+    }
+    
+    private func managedLocalpart(from userID: String) -> String {
+        guard let configuration = parameters.appSettings.managedFamilyConfiguration,
+              userID.hasPrefix("@"),
+              let separator = userID.firstIndex(of: ":"),
+              userID[userID.index(after: separator)...] == configuration.accountProvider else {
+            return ""
+        }
+        return String(userID[userID.index(after: userID.startIndex)..<separator])
     }
     
     private func continueWithOAuth(presentationAnchor: UIWindow?) {
@@ -179,7 +194,13 @@ final class SoftLogoutScreenCoordinator: CoordinatorProtocol {
     private func handleError(_ error: AuthenticationServiceError) {
         switch error {
         case .invalidCredentials:
-            viewModel.displayError(.alert(L10n.screenLoginErrorInvalidCredentials))
+            viewModel.displayError(.alert(parameters.appSettings.managedFamilyConfiguration == nil
+                    ? L10n.screenLoginErrorInvalidCredentials
+                    : ManagedFamilyL10n.managedFamilyLoginInvalidCredentials))
+        case .clientReleaseNotAllowed:
+            viewModel.displayError(.alert(ManagedFamilyL10n.managedFamilyLoginReleaseNotAllowed))
+        case .loginServiceUnavailable:
+            viewModel.displayError(.alert(ManagedFamilyL10n.managedFamilyLoginUnavailable))
         case .accountDeactivated:
             viewModel.displayError(.alert(L10n.screenLoginErrorDeactivatedAccount))
         case .oAuthError(.notSupported):

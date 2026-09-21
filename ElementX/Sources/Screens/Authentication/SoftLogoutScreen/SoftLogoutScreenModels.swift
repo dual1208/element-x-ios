@@ -50,6 +50,9 @@ struct SoftLogoutScreenViewState: BindableState {
     /// Flag indicating soft logged out user needs backup for some keys
     var keyBackupNeeded: Bool
     
+    /// Whether the fixed managed-family authentication flow is active.
+    let isManagedFamilyMode: Bool
+    
     /// View state that can be bound to from SwiftUI.
     var bindings: SoftLogoutScreenBindings
     
@@ -63,7 +66,7 @@ struct SoftLogoutScreenViewState: BindableState {
     
     /// Whether to show recover encryption keys message
     var showRecoverEncryptionKeysMessage: Bool {
-        keyBackupNeeded
+        keyBackupNeeded && !isManagedFamilyMode
     }
     
     /// `true` when valid credentials have been entered and a homeserver has been loaded.

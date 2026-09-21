@@ -1505,6 +1505,7 @@
 		F103924DED414ADFE398CE99 /* RoomPollsHistoryScreenViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A130A2251A15A7AACC84FD37 /* RoomPollsHistoryScreenViewModelProtocol.swift */; };
 		F118DD449066E594F63C697D /* RoomMemberProxyProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B5E17028C02DFA7DDA3931 /* RoomMemberProxyProtocol.swift */; };
 		F12F6BED7B6D7EE4BEE55039 /* PlainMentionBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE78FA0011E07920AE83135 /* PlainMentionBuilder.swift */; };
+		F13BF9F1990FCDC810D73F85 /* ClientAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6034883F3C27ABFD35BDE19D /* ClientAuthService.swift */; };
 		F16EED85E30B83878FBC6629 /* JoinedMembersBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F320003F490B11F808ECC5E9 /* JoinedMembersBadgeView.swift */; };
 		F18CA61A58C77C84F551B8E7 /* GeneratedMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57916A1578D8043BB0795441 /* GeneratedMocks.swift */; };
 		F1C68F64FC8A66B6B9510BF7 /* ManageRoomMemberSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B30CD19ED6243FEDFBA8400 /* ManageRoomMemberSheetView.swift */; };
@@ -2308,6 +2309,7 @@
 		5FACD034DB52525A3CEF2BDF /* SessionVerificationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionVerificationScreen.swift; sourceTree = "<group>"; };
 		60011EF0086E49DBD78E16E5 /* ResolveVerifiedUserSendFailureScreenModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResolveVerifiedUserSendFailureScreenModels.swift; sourceTree = "<group>"; };
 		6033779EB37259F27F938937 /* ClientProxyProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientProxyProtocol.swift; sourceTree = "<group>"; };
+		6034883F3C27ABFD35BDE19D /* ClientAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientAuthService.swift; sourceTree = "<group>"; };
 		604A69C081B935D6A38DE6D8 /* UserProfileScreenModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileScreenModels.swift; sourceTree = "<group>"; };
 		60C9BAE9F9436B14E4E22E8F /* PinnedItemsBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedItemsBannerView.swift; sourceTree = "<group>"; };
 		61B33F23681660E940BA57F4 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/SAS.strings; sourceTree = "<group>"; };
@@ -6278,6 +6280,7 @@
 				5E75948AA1FE1D1A7809931F /* AuthenticationServiceProtocol.swift */,
 				007C16779FDCF10DA4F1A510 /* LinkNewDeviceService.swift */,
 				4E126BB8215781BE1A126743 /* ClassicApp */,
+				C8F8A9D3AB5E1AF4ADB2F158 /* ClientAuth */,
 			);
 			path = Authentication;
 			sourceTree = "<group>";
@@ -6654,6 +6657,14 @@
 				92DB574F954CC2B40F7BE892 /* QRCodeScannerView.swift */,
 			);
 			path = View;
+			sourceTree = "<group>";
+		};
+		C8F8A9D3AB5E1AF4ADB2F158 /* ClientAuth */ = {
+			isa = PBXGroup;
+			children = (
+				6034883F3C27ABFD35BDE19D /* ClientAuthService.swift */,
+			);
+			path = ClientAuth;
 			sourceTree = "<group>";
 		};
 		CA15BB3F6C62B35AE2C281A9 /* Provider */ = {
@@ -7621,6 +7632,7 @@
 				EE878EAA342710DB973E0A87 /* Frameworks */,
 				8E3CD0D0BB6697512E867C1D /* Embed Foundation Extensions */,
 				F5356A7EB31909A578B8B4FB /* Embed Frameworks */,
+				37521EACEF0C1151C1B7247A /* 🔐 Embed client authentication identity */,
 				98CA896D84BFD53B2554E891 /* ⚠️ SwiftLint */,
 				B35AB66424BB30087EEE408C /* 🧹 SwiftFormat */,
 			);
@@ -8022,6 +8034,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\nperiphery scan --format xcode\n";
+		};
+		37521EACEF0C1151C1B7247A /* 🔐 Embed client authentication identity */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(FAMILY_CLIENT_P12_PATH)",
+			);
+			name = "🔐 Embed client authentication identity";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/family-client.p12",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -eu\nif [ \"${FAMILY_CLIENT_AUTH_REQUIRED:-}\" != \"YES\" ]; then\n    echo \"error: FAMILY_CLIENT_AUTH_REQUIRED must be YES for this managed build.\"\n    exit 1\nfi\nif [ -z \"${FAMILY_CLIENT_P12_PATH:-}\" ] || [ ! -r \"$FAMILY_CLIENT_P12_PATH\" ]; then\n    echo \"error: The private family-client.p12 build input is missing or unreadable.\"\n    exit 1\nfi\ndestination=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/family-client.p12\"\nmkdir -p \"$(dirname \"$destination\")\"\n/usr/bin/install -m 600 \"$FAMILY_CLIENT_P12_PATH\" \"$destination\"\n";
 		};
 		7F26850DA7BC749F6FC41586 /* 🧙 Sourcery - Generate mocks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -8658,6 +8691,7 @@
 				2A4F8B76E1F99DE95D5867E6 /* ClassicAppManagerMock.swift in Sources */,
 				696D34FAA9A4E00435DDAF39 /* ClassicAppMediaLoader.swift in Sources */,
 				A52090A4FE0DB826578DFC03 /* Client.swift in Sources */,
+				F13BF9F1990FCDC810D73F85 /* ClientAuthService.swift in Sources */,
 				2252975DECF9B72F83709C4A /* ClientBuilderSDKMock.swift in Sources */,
 				4AC0B3634BDA6817EC7DF539 /* ClientFactory.swift in Sources */,
 				4FBC9E416582352432EBAB7F /* ClientFactoryHook.swift in Sources */,

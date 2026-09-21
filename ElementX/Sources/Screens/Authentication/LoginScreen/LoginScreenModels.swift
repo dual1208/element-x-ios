@@ -25,6 +25,7 @@ enum LoginScreenViewModelAction {
 struct LoginScreenViewState: BindableState {
     /// Data about the selected homeserver.
     var homeserver: LoginHomeserver
+    let isManagedFamilyMode: Bool
     /// Whether a new homeserver is currently being loaded.
     var isLoading = false
     /// View state that can be bound to from SwiftUI.

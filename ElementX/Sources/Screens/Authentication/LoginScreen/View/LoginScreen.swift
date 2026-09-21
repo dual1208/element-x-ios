@@ -50,7 +50,9 @@ struct LoginScreen: View {
             BigIcon(icon: \.lockSolid)
                 .padding(.bottom, 8)
             
-            Text(L10n.screenLoginTitleWithHomeserver(context.viewState.homeserver.address))
+            Text(context.viewState.isManagedFamilyMode
+                ? ManagedFamilyL10n.managedFamilyLoginTitle
+                : L10n.screenLoginTitleWithHomeserver(context.viewState.homeserver.address))
                 .font(.compound.headingMDBold)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.compound.textPrimary)
@@ -88,7 +90,9 @@ struct LoginScreen: View {
             Spacer().frame(height: 32)
             
             Button(action: submit) {
-                Text(L10n.actionContinue)
+                Text(context.viewState.isManagedFamilyMode
+                    ? ManagedFamilyL10n.managedFamilyLoginSubmit
+                    : L10n.actionContinue)
             }
             .buttonStyle(.compound(.primary))
             .disabled(!context.viewState.canSubmit)

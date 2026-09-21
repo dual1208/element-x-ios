@@ -16,6 +16,7 @@ export_options := env_var_or_default("IOS_EXPORT_OPTIONS_PLIST", "Config/AppStor
 validation_options := env_var_or_default("IOS_VALIDATION_OPTIONS_PLIST", "Config/AppStoreValidationOptions.plist")
 device_export_path := env_var_or_default("IOS_DEVICE_EXPORT_PATH", ".codex-archives/device-export")
 device_export_options := env_var_or_default("IOS_DEVICE_EXPORT_OPTIONS_PLIST", "Config/DeviceExportOptions.plist")
+client_auth_identity := env_var_or_default("IOS_CLIENT_AUTH_P12", "/Users/xie/IMcalling/.artifacts/client-credentials/family-client.p12")
 
 default:
     @just --list
@@ -29,6 +30,9 @@ device:
 generate:
     xcodegen
 
+client-auth-identity:
+    test -r "{{ client_auth_identity }}" || { print -u2 'Missing private iOS client identity. Set IOS_CLIENT_AUTH_P12 to the readable family-client.p12 path.'; exit 1; }
+
 fmt:
     swiftformat .
 
@@ -36,10 +40,10 @@ lint:
     swiftformat --lint .
     swiftlint
 
-build:
+build: client-auth-identity
     just device
     mkdir -p .codex-logs
-    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES SKIP_OPTIONAL_STYLE_CHECKS=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration {{ configuration }} -destination '{{ destination }}' -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES SKIP_OPTIONAL_STYLE_CHECKS=YES FAMILY_CLIENT_AUTH_REQUIRED=YES "FAMILY_CLIENT_P12_PATH={{ client_auth_identity }}" -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates build 2>&1 | tee .codex-logs/device-build.log | xcbeautify
 
 test-managed:
     just device
@@ -77,9 +81,9 @@ entitlements:
     test -d {{ app_path }}
     codesign -d --entitlements :- {{ app_path }}
 
-archive:
+archive: client-auth-identity
     mkdir -p "$(dirname {{ archive_path }})" .codex-logs
-    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES SKIP_OPTIONAL_STYLE_CHECKS=YES -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
+    set -o pipefail; {{ xcodebuild }} -project ElementX.xcodeproj -scheme {{ scheme }} -configuration Release -destination 'generic/platform=iOS' -archivePath {{ archive_path }} -derivedDataPath {{ derived_data }} -jobs {{ build_jobs }} ARCHS=arm64 ONLY_ACTIVE_ARCH=YES SKIP_OPTIONAL_STYLE_CHECKS=YES FAMILY_CLIENT_AUTH_REQUIRED=YES "FAMILY_CLIENT_P12_PATH={{ client_auth_identity }}" -disableAutomaticPackageResolution -skipPackageUpdates -allowProvisioningUpdates archive 2>&1 | tee .codex-logs/archive.log | xcbeautify
 
 export-archive:
     test -d {{ archive_path }}

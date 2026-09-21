@@ -205,6 +205,27 @@ targets:
         fi
 
     postBuildScripts:
+    - name: 🔐 Embed client authentication identity
+      runOnlyWhenInstalling: false
+      basedOnDependencyAnalysis: false
+      inputFiles:
+      - $(FAMILY_CLIENT_P12_PATH)
+      outputFiles:
+      - $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/family-client.p12
+      shell: /bin/sh
+      script: |
+        set -eu
+        if [ "${FAMILY_CLIENT_AUTH_REQUIRED:-}" != "YES" ]; then
+            echo "error: FAMILY_CLIENT_AUTH_REQUIRED must be YES for this managed build."
+            exit 1
+        fi
+        if [ -z "${FAMILY_CLIENT_P12_PATH:-}" ] || [ ! -r "$FAMILY_CLIENT_P12_PATH" ]; then
+            echo "error: The private family-client.p12 build input is missing or unreadable."
+            exit 1
+        fi
+        destination="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/family-client.p12"
+        mkdir -p "$(dirname "$destination")"
+        /usr/bin/install -m 600 "$FAMILY_CLIENT_P12_PATH" "$destination"
     - name: ⚠️ SwiftLint
       runOnlyWhenInstalling: false
       basedOnDependencyAnalysis: false

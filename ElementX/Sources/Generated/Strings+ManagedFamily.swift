@@ -12,6 +12,16 @@ import Foundation
 internal nonisolated enum ManagedFamilyL10n {
   /// Incoming call alerts
   internal static var managedFamilyCallNotifications: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_call_notifications") }
+  /// The username or password is incorrect.
+  internal static var managedFamilyLoginInvalidCredentials: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_login_invalid_credentials") }
+  /// This app version is not authorized. Ask the person who installed it to update the app.
+  internal static var managedFamilyLoginReleaseNotAllowed: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_login_release_not_allowed") }
+  /// Sign in
+  internal static var managedFamilyLoginSubmit: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_login_submit") }
+  /// Sign in
+  internal static var managedFamilyLoginTitle: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_login_title") }
+  /// Sign-in is temporarily unavailable. Try again later.
+  internal static var managedFamilyLoginUnavailable: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_login_unavailable") }
   /// You can sign back in later with the same account.
   internal static var managedFamilyLogoutMessage: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_logout_message") }
   /// Sign out
@@ -30,6 +40,8 @@ internal nonisolated enum ManagedFamilyL10n {
   internal static var managedFamilySetupNeedsHelp: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_setup_needs_help") }
   /// If it does not open, check the account in Settings or ask the family member who installed the app.
   internal static var managedFamilySetupNeedsHelpMessage: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_setup_needs_help_message") }
+  /// Your sign-in expired. Enter your password again.
+  internal static var managedFamilySoftLogoutMessage: String { return ManagedFamilyL10n.tr("ManagedFamily", "managed_family_soft_logout_message") }
 }
 // swiftlint:enable explicit_type_interface function_parameter_count identifier_name line_length
 // swiftlint:enable nesting type_body_length type_name vertical_whitespace_opening_braces

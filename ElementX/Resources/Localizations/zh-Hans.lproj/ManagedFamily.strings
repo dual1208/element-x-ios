@@ -8,3 +8,9 @@
 "managed_family_logout_title" = "退出登录";
 "managed_family_logout_message" = "退出后，可以使用原账号重新登录。";
 "managed_family_logout_submit" = "退出登录";
+"managed_family_login_invalid_credentials" = "账号或密码不正确。";
+"managed_family_login_release_not_allowed" = "此版本未获授权，请联系安装人员更新应用。";
+"managed_family_login_submit" = "登录";
+"managed_family_login_title" = "登录";
+"managed_family_login_unavailable" = "暂时无法登录，请稍后再试。";
+"managed_family_soft_logout_message" = "登录已过期，请重新输入密码。";

@@ -47,6 +47,7 @@ build
 test_output
 .codex-logs/
 .codex-archives/
+family-client.p12
 
 # Only commit Pkl packages (there may be other caches in here).
 Components/Secrets/vendor/*

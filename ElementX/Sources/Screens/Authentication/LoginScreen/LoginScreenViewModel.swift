@@ -37,6 +37,7 @@ class LoginScreenViewModel: LoginScreenViewModelType, LoginScreenViewModelProtoc
         }
         
         let viewState = LoginScreenViewState(homeserver: authenticationService.homeserver.value,
+                                             isManagedFamilyMode: appSettings.managedFamilyConfiguration != nil,
                                              bindings: LoginScreenBindings(username: username))
         
         super.init(initialViewState: viewState)
@@ -65,6 +66,7 @@ class LoginScreenViewModel: LoginScreenViewModelType, LoginScreenViewModelProtoc
     
     /// Parses the specified username and looks up the homeserver when a Matrix ID is entered.
     private func parseUsername() {
+        guard appSettings.managedFamilyConfiguration == nil else { return }
         let username = state.bindings.username
         
         guard let homeserverDomain = try? serverNameFromUserId(userId: username) else { return }
@@ -126,11 +128,21 @@ class LoginScreenViewModel: LoginScreenViewModelType, LoginScreenViewModelProtoc
         case .invalidCredentials:
             state.bindings.alertInfo = AlertInfo(id: .credentialsAlert,
                                                  title: L10n.commonError,
-                                                 message: L10n.screenLoginErrorInvalidCredentials)
+                                                 message: appSettings.managedFamilyConfiguration == nil
+                                                     ? L10n.screenLoginErrorInvalidCredentials
+                                                     : ManagedFamilyL10n.managedFamilyLoginInvalidCredentials)
         case .accountDeactivated:
             state.bindings.alertInfo = AlertInfo(id: .deactivatedAlert,
                                                  title: L10n.commonError,
                                                  message: L10n.screenLoginErrorDeactivatedAccount)
+        case .clientReleaseNotAllowed:
+            state.bindings.alertInfo = AlertInfo(id: .unknown,
+                                                 title: L10n.commonError,
+                                                 message: ManagedFamilyL10n.managedFamilyLoginReleaseNotAllowed)
+        case .loginServiceUnavailable:
+            state.bindings.alertInfo = AlertInfo(id: .unknown,
+                                                 title: L10n.commonError,
+                                                 message: ManagedFamilyL10n.managedFamilyLoginUnavailable)
         case .invalidWellKnown(let error):
             state.bindings.alertInfo = AlertInfo(id: .slidingSyncAlert,
                                                  title: L10n.commonServerNotSupported,
