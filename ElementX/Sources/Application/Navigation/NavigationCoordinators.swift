@@ -14,7 +14,7 @@ import SwiftUI
 /// into a single navigation stack on compact layouts
 @Observable class NavigationSplitCoordinator: CoordinatorProtocol, CustomStringConvertible {
     fileprivate let placeholderModule: NavigationModule
-    private let prefersDetailOnly: Bool
+    fileprivate let prefersDetailOnly: Bool
     
     fileprivate var sidebarModule: NavigationModule? {
         didSet {
@@ -428,12 +428,25 @@ private struct NavigationSplitCoordinatorView: View {
             }
         }
         .navigationSplitViewStyle(.balanced)
+        .modifier(SidebarToggleVisibilityModifier(isHidden: navigationSplitCoordinator.prefersDetailOnly))
         .navigationDestination(for: NavigationModule.self) { module in
             module.coordinator?.toPresentable()
                 .id(module.id)
         }
         .animation(.elementDefault, value: navigationSplitCoordinator.sidebarModule)
         .animation(.noAnimation, value: navigationSplitCoordinator.detailModule) // Don't crossfade the detail transition on iPad.
+    }
+}
+
+private struct SidebarToggleVisibilityModifier: ViewModifier {
+    let isHidden: Bool
+    
+    func body(content: Content) -> some View {
+        if isHidden {
+            content.toolbar(removing: .sidebarToggle)
+        } else {
+            content
+        }
     }
 }
 
